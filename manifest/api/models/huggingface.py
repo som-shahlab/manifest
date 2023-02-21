@@ -137,10 +137,20 @@ class GenerationPipeline:
         Returns:
             generated text.
         """
+        # set generation params
+        max_new_tokens = kwargs.get("max_new_tokens", 30)
+        temperature = kwargs.get("temperature", 1.0)
+        top_k = kwargs.get("top_k", 50)
+        top_p = kwargs.get("top_p", 1)
+        repetition_penalty = kwargs.get("repetition_penalty", 1)
+        do_sample = kwargs.get("do_sample", False)
+        num_return_sequences = kwargs.get("num_return_sequences", 1)
+        print(f"Generating with parameters: max_new_tokens={max_new_tokens}, temperature={temperature}, top_k={top_k}, top_p={top_p}, repetition_penalty={repetition_penalty}, do_sample={do_sample}, num_return_sequences={num_return_sequences}")
+        
         # If text is longer than max model length, we reduce max input length to ensure
         # the user indicated generation tokens is preserved.
         max_input_len = (
-            self.max_length - kwargs.get("max_new_tokens")
+            self.max_length - max_new_tokens
             if not self.is_encdec
             else self.max_length
         )
@@ -152,17 +162,19 @@ class GenerationPipeline:
             return_tensors="pt",
         )
         encoded_prompt = encoded_prompt.to(self.device)
+        
         output_dict = self.model.generate(  # type: ignore
-            **encoded_prompt,
-            max_new_tokens=kwargs.get("max_new_tokens"),
-            temperature=kwargs.get("temperature", None),
-            top_k=kwargs.get("top_k", None),
-            top_p=kwargs.get("top_p", None),
-            repetition_penalty=kwargs.get("repetition_penalty", None),
-            do_sample=kwargs.get("do_sample", None) if not self.bitsandbytes else False,
+            input_ids=encoded_prompt['input_ids'],
+            attention_mask=encoded_prompt['attention_mask'],
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            do_sample=do_sample if not self.bitsandbytes else False,
             eos_token_id=self.tokenizer.eos_token_id,
             pad_token_id=self.tokenizer.pad_token_id,
-            num_return_sequences=kwargs.get("num_return_sequences", None),
+            num_return_sequences=num_return_sequences,
             output_scores=True,
             return_dict_in_generate=True,
         )
@@ -321,7 +333,6 @@ class HuggingFaceModel(Model):
         dispatch_model(model, device_map=device_map)
         return
 
-
 class CrossModalEncoderModel(HuggingFaceModel):
     """CrossModalEncoderModel."""
 
@@ -459,7 +470,7 @@ class TextGenerationModel(HuggingFaceModel):
         )
         try:
             tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name, truncation_side="left", padding_side="left"
+                self.model_name, truncation_side="left", padding_side="left",
             )
         except ValueError:
             tokenizer = AutoTokenizer.from_pretrained(
@@ -482,17 +493,19 @@ class TextGenerationModel(HuggingFaceModel):
                 max_memory=max_memory,
             )
         else:
-            try:
-                # Try to explicitely find a fp16 copy (gpt-j-6B for example)
-                model = MODEL_REGISTRY.get(
-                    self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
-                ).from_pretrained(  # type: ignore
-                    self.model_path,
-                    cache_dir=cache_dir,
-                    revision="float16",
-                    torch_dtype=torch.float16,
-                )
-            except Exception:
+            model = None
+            if use_fp16:
+                try:
+                    # Try to find an explicit float16 model
+                    model = MODEL_REGISTRY.get(
+                        self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
+                    ).from_pretrained(  # type: ignore
+                        self.model_path, cache_dir=cache_dir, revision="float16", torch_dtype=dtype,
+                    )
+                except:
+                    # Couldn't find explicit float16 model
+                    pass
+            if model is None:
                 model = MODEL_REGISTRY.get(
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
@@ -581,14 +594,13 @@ class TextGenerationModel(HuggingFaceModel):
             for r in result
         ]
         return final_results
-
+    
     @torch.no_grad()
     def score_sequence(
         self, prompt: Union[str, List[str]], **kwargs: Any
     ) -> List[Tuple[float, List[float]]]:
         """
         Score a sequence of choices.
-
         Args:
             prompt (:obj:`str` or :obj:`List[str]`):
                 The prompt to score the choices against.
@@ -628,3 +640,107 @@ class TextGenerationModel(HuggingFaceModel):
                 seq_log_prob.tolist(), seq_token_log_probs.tolist()
             )
         ]
+
+    def tokenize(self, prompt: Union[str, List[str]], **kwargs) -> torch.Tensor:
+        """Tokenize input."""
+        if isinstance(prompt, str):
+            prompt = [prompt]
+        encoded_prompt = self.pipeline.tokenizer(
+            prompt,
+            max_length=self.pipeline.max_length,
+            truncation=kwargs.get('truncation', True),
+            padding=kwargs.get('padding', True),
+            **kwargs,
+        )
+        return encoded_prompt
+
+    @torch.no_grad()
+    def score_sequence_eleuther_lm_eval(
+        self, prompt_with_label: List[Tuple[str,str]], **kwargs: Any
+    ) -> List[Tuple[str, str, float]]:
+        """
+        Score a sequence of (prompt + label).
+
+        Args:
+            prompt_with_label: List[Tuple[str,str]]
+                The prompt to score the labels against, plus its corresponding label.
+                Unlike the other score_sequence method, the label is not included in the prompt.
+            **kwargs:
+                Additional keyword arguments passed along to the :obj:`__call__` method.
+        """
+
+        prompts: List[str] = [ x[0] for x in prompt_with_label ]
+        labels: List[str] = [ x[1] for x in prompt_with_label ]
+        
+        if self.model_type == 'text2text-generation':
+            # For seq2seq models, we add the label as the output expected from the decoder, and
+            # separate the label from the prompt (input to the encoder)
+            encoded_prompt = self.pipeline.tokenizer(
+                prompts,
+                max_length=self.pipeline.max_length,
+                truncation=True,
+                padding=True,
+                add_special_tokens=False,
+                return_tensors="pt",
+            )
+            encoded_prompt["labels"] = self.pipeline.tokenizer(
+                                            labels, 
+                                            max_length=self.pipeline.max_length,
+                                            return_tensors="pt",
+                                            truncation=True,
+                                            padding=True,
+                                            add_special_tokens=False,
+                                        )['input_ids']
+            encoded_prompt = encoded_prompt.to(self.pipeline.device)
+            # Generate model logits for `labels`
+            outputs = self.pipeline.model(  # type: ignore
+                **encoded_prompt
+            )
+            log_softmaxes = torch.log_softmax(outputs.logits, dim=-1)
+            label_mask = encoded_prompt["labels"] != self.pipeline.tokenizer.pad_token_id
+            label_token_probs = torch.gather(log_softmaxes, -1, encoded_prompt["labels"].unsqueeze(-1)).squeeze(-1)
+            label_probs = (label_mask * label_token_probs).sum(dim=-1)
+        elif self.model_type == 'text-generation':
+            # For gpt2-like models, we append the label to the end of the prompt, measure
+            # the entire sequence's logprob, and count that as the label's logprob (since 
+            # the label is the only thing that changes between sequences, so the prompt's logprob
+            # will be constant across all labels)
+            
+            # Pad right instead of left
+            encoded_prompt = self.pipeline.tokenizer(
+                [ f"{x} {y}" for (x,y) in zip(prompts, labels) ],
+                max_length=self.pipeline.max_length,
+                truncation=True,
+                padding=True,
+                add_special_tokens=False,
+                return_tensors="pt",
+            )
+            encoded_prompt = encoded_prompt.to(self.pipeline.device)
+            # Generate model logits for `labels`
+            outputs = self.pipeline.model(  # type: ignore
+                **encoded_prompt
+            )
+            prompt_lens: List[int] = [ len(x) for x in self.pipeline.tokenizer(
+                [ f"{x}" for (x,y) in zip(prompts, labels) ],
+                max_length=self.pipeline.max_length,
+                truncation=True,
+                padding=False,
+                add_special_tokens=False,
+            )['input_ids'] ]
+            log_softmaxes = torch.log_softmax(outputs.logits, dim=-1)
+            label_mask = torch.ones(log_softmaxes.shape[0], log_softmaxes.shape[1])
+            for idx, prompt_len in enumerate(prompt_lens):
+                # Mask out the prompt (plus any initial left padding) so that we're left with
+                # just the tokens corresponding to the label
+                left_padding_in_encoded_prompt: int = (encoded_prompt['attention_mask'][idx, :] == 0).sum().item()
+                label_mask[idx, :prompt_len + left_padding_in_encoded_prompt] = 0
+            # Shift everything to the left by one token, so that we're measuring the logprob of the *next* token
+            shifted_input_ids = torch.roll(encoded_prompt['input_ids'], -1, dims=1).unsqueeze(-1)
+            shifted_label_mask = torch.roll(label_mask, -1, dims=1).to(self.pipeline.device)
+            # Calculate probability of next token at each position
+            all_token_probs = torch.gather(log_softmaxes, -1, shifted_input_ids).squeeze(-1)
+            # Drop everything except the logprobs corresponding to the labels
+            label_probs = (shifted_label_mask * all_token_probs).sum(dim=-1)
+        else:
+            raise ValueError(f"Unsupported model type: {self.model_type}")
+        return list(zip(prompts, labels, label_probs.tolist()))

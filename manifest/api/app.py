@@ -7,7 +7,6 @@ import os
 import socket
 from typing import Dict
 
-import pkg_resources
 from flask import Flask, Response, request
 
 from manifest.api.models.diffuser import DiffuserModel
@@ -98,6 +97,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=("Use deepspeed. This will override --device parameter."),
     )
+    parser.add_argument(
+        "--is_flask_debug",
+        action="store_true",
+        help=("If TRUE, then run Flask in debug mode with autoreload."),
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=PORT,
+        help=("Specify the port to run Flask server on. Defaults to FLASK_PORT environment variable. If that's not set, defaults to 5000"),
+    )
     args = parser.parse_args()
     return args
 
@@ -111,8 +121,8 @@ def is_port_in_use(port: int) -> bool:
 def main() -> None:
     """Run main."""
     kwargs = parse_args()
-    if is_port_in_use(PORT):
-        raise ValueError(f"Port {PORT} is already in use.")
+    # if is_port_in_use(PORT):
+    #     raise ValueError(f"Port {PORT} is already in use.")
     global model_type
     model_type = kwargs.model_type
     model_gen_type = kwargs.model_generation_type
@@ -155,7 +165,7 @@ def main() -> None:
         perc_max_gpu_mem_red=kwargs.percent_max_gpu_mem_reduction,
         use_fp16=kwargs.fp16,
     )
-    app.run(host="0.0.0.0", port=PORT)
+    app.run(host="0.0.0.0", port=kwargs.port, debug=kwargs.is_flask_debug)
 
 
 @app.route("/completions", methods=["POST"])
@@ -191,6 +201,8 @@ def completions() -> Response:
         )
     except Exception as e:
         logger.error(e)
+        import traceback
+        print(traceback.format_exc())
         return Response(
             json.dumps({"message": str(e)}),
             status=400,
@@ -260,18 +272,69 @@ def score_sequence() -> Response:
         )
 
 
+@app.route("/score_sequence_eleuther_lm_eval", methods=["POST"])
+def score_sequence_eleuther_lm_eval() -> Response:
+    """Get logprob of prompt."""
+    prompts_with_labels = request.json["prompts_with_labels"]
+    del request.json["prompts_with_labels"]
+    generation_args = request.json
+
+    if not isinstance(prompts_with_labels, (tuple, list)):
+        raise ValueError("Prompt must be a tuple or list of tuples")
+
+    if isinstance(prompts_with_labels, tuple):
+        prompts_with_labels = [prompts_with_labels]
+
+    try:
+        score_list = model.score_sequence_eleuther_lm_eval(prompts_with_labels, **generation_args)
+        results = [
+            {
+                "prompt": p,
+                "label" : l,
+                "label_prob": probs,
+            }
+            for p, l, probs in score_list
+        ]
+        # transform the result into the openai format
+        return Response(json.dumps(results), status=200)
+    except Exception as e:
+        logger.error(e)
+        return Response(
+            json.dumps({"message": str(e)}),
+            status=400,
+        )
+
 @app.route("/params", methods=["POST"])
 def params() -> Dict:
     """Get model params."""
     return model.get_init_params()
 
 
+@app.route("/model_config", methods=["GET"])
+def model_config() -> Dict:
+    """Get model config."""
+    return model.pipeline.model.config.to_dict()
+
+@app.route("/tokenizer_config", methods=["GET"])
+def tokenizer_config() -> Dict:
+    """Get tokenizer config."""
+    return model.pipeline.tokenizer.__repr__()
+
+@app.route("/tokenize", methods=["POST"])
+def tokenize() -> Dict:
+    """Get tokenized version of prompt."""
+    prompt = request.json["prompt"]
+    encoded_prompt = model.tokenize(prompt)
+    return {
+        'input_ids' : encoded_prompt['input_ids'],
+        'attention_mask' : encoded_prompt['attention_mask'],
+    }
+
+
 @app.route("/")
 def index() -> str:
     """Get index completion."""
-    fn = pkg_resources.resource_filename("metaseq", "service/index.html")
-    with open(fn) as f:
-        return f.read()
+    return 'Welcome to Manifest. Try using a different endpoint.'
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ runs/*
 *.pk
 **/*.pt
 **/*.pk
+.vscode/
+.vscode/*
 
 # PyCharm
 *.idea
