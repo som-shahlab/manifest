@@ -145,14 +145,17 @@ class GenerationPipeline:
         repetition_penalty = kwargs.get("repetition_penalty", 1)
         do_sample = kwargs.get("do_sample", False)
         num_return_sequences = kwargs.get("num_return_sequences", 1)
-        print(f"Generating with parameters: max_new_tokens={max_new_tokens}, temperature={temperature}, top_k={top_k}, top_p={top_p}, repetition_penalty={repetition_penalty}, do_sample={do_sample}, num_return_sequences={num_return_sequences}")
-        
+        print(
+            f"Generating with parameters: max_new_tokens={max_new_tokens},"
+            f" temperature={temperature}, top_k={top_k}, top_p={top_p},"
+            f" repetition_penalty={repetition_penalty}, do_sample={do_sample},"
+            f" num_return_sequences={num_return_sequences}"
+        )
+
         # If text is longer than max model length, we reduce max input length to ensure
         # the user indicated generation tokens is preserved.
         max_input_len = (
-            self.max_length - max_new_tokens
-            if not self.is_encdec
-            else self.max_length
+            self.max_length - max_new_tokens if not self.is_encdec else self.max_length
         )
         encoded_prompt = self.tokenizer(
             text,
@@ -162,10 +165,10 @@ class GenerationPipeline:
             return_tensors="pt",
         )
         encoded_prompt = encoded_prompt.to(self.device)
-        
+
         output_dict = self.model.generate(  # type: ignore
-            input_ids=encoded_prompt['input_ids'],
-            attention_mask=encoded_prompt['attention_mask'],
+            input_ids=encoded_prompt["input_ids"],
+            attention_mask=encoded_prompt["attention_mask"],
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             top_k=top_k,
@@ -239,11 +242,18 @@ class HuggingFaceModel(Model):
             )
         # Check if providing path
         self.model_path = model_name_or_path
-        # if Path(self.model_path).exists() and Path(self.model_path).is_dir():
-        #     # Try to find config
-        #     if (Path(self.model_path) / "config.json").exists():
-        #         config = json.load(open(Path(self.model_path) / "config.json"))
-        #         model_name_or_path = config["_name_or_path"]
+        if Path(self.model_path).exists() and Path(self.model_path).is_dir():
+            # Try to find config
+            if (Path(self.model_path) / "config.json").exists():
+                try:
+                    config = json.load(open(Path(self.model_path) / "config.json"))
+                    if config["_name_or_path"] != "":
+                        model_name_or_path = config["_name_or_path"]
+                    else:
+                        print(f"`_name_or_path` attribute in config set to \"\". Defaulting to {model_name_or_path}")
+                except Exception:
+                    # Wasn't able to load config
+                    print(f"Unable to load config from {self.model_path}")
         self.model_name = model_name_or_path
         self.model_type = model_type
         if self.model_name not in MODEL_REGISTRY and self.model_type is None:
@@ -333,6 +343,7 @@ class HuggingFaceModel(Model):
         print("Device Map", device_map)
         dispatch_model(model, device_map=device_map)
         return
+
 
 class CrossModalEncoderModel(HuggingFaceModel):
     """CrossModalEncoderModel."""
@@ -471,7 +482,7 @@ class TextGenerationModel(HuggingFaceModel):
         )
         try:
             tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name, truncation_side="left", padding_side="left",
+                self.model_name, truncation_side="left", padding_side="left"
             )
         except ValueError:
             tokenizer = AutoTokenizer.from_pretrained(
@@ -499,13 +510,20 @@ class TextGenerationModel(HuggingFaceModel):
                 try:
                     # Try to find an explicit float16 model
                     model = MODEL_REGISTRY.get(
-                        self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
+                        self.model_name,
+                        MODEL_GENTYPE_REGISTRY.get(self.model_type, None),
                     ).from_pretrained(  # type: ignore
-                        self.model_path, cache_dir=cache_dir, revision="float16", torch_dtype=dtype,
+                        self.model_path,
+                        cache_dir=cache_dir,
+                        revision="float16",
+                        torch_dtype=dtype,
                     )
-                except:
+                except Exception:
                     # Couldn't find explicit float16 model
-                    pass
+                    print(
+                        "WARNING!!! Could not find explicit"
+                        " float16 model. Using default model version."
+                    )
             if model is None:
                 model = MODEL_REGISTRY.get(
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
@@ -613,13 +631,14 @@ class TextGenerationModel(HuggingFaceModel):
             for r in result
         ]
         return final_results
-    
+
     @torch.no_grad()
     def score_sequence(
         self, prompt: Union[str, List[str]], **kwargs: Any
     ) -> List[Tuple[float, List[int], List[float]]]:
         """
         Score a sequence of choices.
+
         Args:
             prompt (:obj:`str` or :obj:`List[str]`):
                 The prompt to score the choices against.
@@ -659,40 +678,49 @@ class TextGenerationModel(HuggingFaceModel):
             )
         ]
 
-    def tokenize(self, prompt: Union[str, List[str]], **kwargs) -> torch.Tensor:
+    def tokenize(self, 
+                 prompt: Union[str, List[str]], 
+                 **kwargs: Any) -> torch.Tensor:
         """Tokenize input."""
         if isinstance(prompt, str):
             prompt = [prompt]
         encoded_prompt = self.pipeline.tokenizer(
             prompt,
             max_length=self.pipeline.max_length,
-            truncation=kwargs.get('truncation', True),
-            padding=kwargs.get('padding', True),
+            truncation=kwargs.get("truncation", True),
+            padding=kwargs.get("padding", True),
             **kwargs,
         )
         return encoded_prompt
 
     @torch.no_grad()
     def score_sequence_eleuther_lm_eval(
-        self, prompt_with_label: List[Tuple[str,str]], **kwargs: Any
+        self, 
+        prompt_with_label: List[Tuple[str, str]], 
+        **kwargs: Any
     ) -> List[Tuple[str, str, float]]:
         """
-        Score a sequence of (prompt + label).
+        Score a list of (prompt + label) the way the EleutherAI eval harness does.
 
         Args:
             prompt_with_label: List[Tuple[str,str]]
-                The prompt to score the labels against, plus its corresponding label.
-                Unlike the other score_sequence method, the label is not included in the prompt.
+                The prompt to score the labels against,
+                plus its corresponding label.
+                Unlike the other `score_sequence()` method,
+                the label is not included in the prompt.
             **kwargs:
                 Additional keyword arguments passed along to the :obj:`__call__` method.
         """
-
-        prompts: List[str] = [ x[0] for x in prompt_with_label ]
-        labels: List[str] = [ x[1] for x in prompt_with_label ]
+        prompts: List[str] = [x[0] for x in prompt_with_label]
+        labels: List[str] = [x[1] for x in prompt_with_label]
         
-        if self.model_type == 'text2text-generation':
-            # For seq2seq models, we add the label as the output expected from the decoder, and
-            # separate the label from the prompt (input to the encoder)
+        # By default, will strip trailing/leading spaces from the label
+        is_strip_spaces: bool = kwargs.get('is_strip_spaces', True)
+
+        if self.model_type == "text2text-generation":
+            # For seq2seq models, we add the label as the
+            # output expected from the decoder, and separate
+            # the label from the prompt (input to the encoder)
             encoded_prompt = self.pipeline.tokenizer(
                 prompts,
                 max_length=self.pipeline.max_length,
@@ -702,31 +730,36 @@ class TextGenerationModel(HuggingFaceModel):
                 return_tensors="pt",
             )
             encoded_prompt["labels"] = self.pipeline.tokenizer(
-                                            labels, 
-                                            max_length=self.pipeline.max_length,
-                                            return_tensors="pt",
-                                            truncation=True,
-                                            padding=True,
-                                            add_special_tokens=False,
-                                        )['input_ids']
+                labels,
+                max_length=self.pipeline.max_length,
+                return_tensors="pt",
+                truncation=True,
+                padding=True,
+                add_special_tokens=False,
+            )["input_ids"]
             encoded_prompt = encoded_prompt.to(self.pipeline.device)
             # Generate model logits for `labels`
-            outputs = self.pipeline.model(  # type: ignore
-                **encoded_prompt
-            )
+            outputs = self.pipeline.model(**encoded_prompt)  # type: ignore
             log_softmaxes = torch.log_softmax(outputs.logits, dim=-1)
-            label_mask = encoded_prompt["labels"] != self.pipeline.tokenizer.pad_token_id
-            label_token_probs = torch.gather(log_softmaxes, -1, encoded_prompt["labels"].unsqueeze(-1)).squeeze(-1)
-            label_probs = (label_mask * label_token_probs).sum(dim=-1)
-        elif self.model_type == 'text-generation':
-            # For gpt2-like models, we append the label to the end of the prompt, measure
-            # the entire sequence's logprob, and count that as the label's logprob (since 
-            # the label is the only thing that changes between sequences, so the prompt's logprob
+            label_mask = (
+                encoded_prompt["labels"] != self.pipeline.tokenizer.pad_token_id
+            )
+            label_token_probs = torch.gather(
+                log_softmaxes, -1, encoded_prompt["labels"].unsqueeze(-1)
+            ).squeeze(-1)
+            masked_probs = label_mask * label_token_probs
+            label_probs = masked_probs.sum(dim=-1)
+        elif self.model_type == "text-generation":
+            # For gpt2-like models, we append the label to the
+            # end of the prompt, measure the entire sequence's
+            # logprob, and count that as the label's logprob
+            # (since the label is the only thing that changes
+            # between sequences, so the prompt's logprob
             # will be constant across all labels)
-            
-            # Pad right instead of left
+
+            # Pad left instead of right
             encoded_prompt = self.pipeline.tokenizer(
-                [ f"{x} {y}" for (x,y) in zip(prompts, labels) ],
+                [f"{x} {y.strip() if is_strip_spaces else y}" for (x, y) in zip(prompts, labels)],
                 max_length=self.pipeline.max_length,
                 truncation=True,
                 padding=True,
@@ -735,28 +768,39 @@ class TextGenerationModel(HuggingFaceModel):
             )
             encoded_prompt = encoded_prompt.to(self.pipeline.device)
             # Generate model logits for `labels`
-            outputs = self.pipeline.model(  # type: ignore
-                **encoded_prompt
-            )
-            prompt_lens: List[int] = [ len(x) for x in self.pipeline.tokenizer(
-                [ f"{x}" for (x,y) in zip(prompts, labels) ],
-                max_length=self.pipeline.max_length,
-                truncation=True,
-                padding=False,
-                add_special_tokens=False,
-            )['input_ids'] ]
+            outputs = self.pipeline.model(**encoded_prompt)  # type: ignore
+            prompt_lens: List[int] = [
+                len(x)
+                for x in self.pipeline.tokenizer(
+                    [f"{x}" for (x, y) in zip(prompts, labels)],
+                    max_length=self.pipeline.max_length,
+                    truncation=True,
+                    padding=False,
+                    add_special_tokens=False,
+                )["input_ids"]
+            ]
             log_softmaxes = torch.log_softmax(outputs.logits, dim=-1)
             label_mask = torch.ones(log_softmaxes.shape[0], log_softmaxes.shape[1])
             for idx, prompt_len in enumerate(prompt_lens):
-                # Mask out the prompt (plus any initial left padding) so that we're left with
-                # just the tokens corresponding to the label
-                left_padding_in_encoded_prompt: int = (encoded_prompt['attention_mask'][idx, :] == 0).sum().item()
-                label_mask[idx, :prompt_len + left_padding_in_encoded_prompt] = 0
-            # Shift everything to the left by one token, so that we're measuring the logprob of the *next* token
-            shifted_input_ids = torch.roll(encoded_prompt['input_ids'], -1, dims=1).unsqueeze(-1)
-            shifted_label_mask = torch.roll(label_mask, -1, dims=1).to(self.pipeline.device)
+                # Mask out the prompt (plus any initial left padding)
+                # so that we're left with just the tokens
+                # corresponding to the label
+                left_padding_in_encoded_prompt: int = (
+                    (encoded_prompt["attention_mask"][idx, :] == 0).sum().item()
+                )
+                label_mask[idx, : prompt_len + left_padding_in_encoded_prompt] = 0
+            # Shift everything to the left by one token, so that we're
+            # measuring the logprob of the *next* token
+            shifted_input_ids = torch.roll(
+                encoded_prompt["input_ids"], -1, dims=1
+            ).unsqueeze(-1)
+            shifted_label_mask = torch.roll(label_mask, -1, dims=1).to(
+                self.pipeline.device
+            )
             # Calculate probability of next token at each position
-            all_token_probs = torch.gather(log_softmaxes, -1, shifted_input_ids).squeeze(-1)
+            all_token_probs = torch.gather(
+                log_softmaxes, -1, shifted_input_ids
+            ).squeeze(-1)
             # Drop everything except the logprobs corresponding to the labels
             label_probs = (shifted_label_mask * all_token_probs).sum(dim=-1)
         else:
