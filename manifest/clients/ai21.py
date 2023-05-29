@@ -47,11 +47,7 @@ class AI21Client(Client):
         """
         # Taken from https://studio.ai21.com/docs/api/
         self.host = "https://api.ai21.com/studio/v1"
-<<<<<<< HEAD
-        self.api_key = os.environ.get("AI21_API_KEY", connection_str)
-=======
         self.api_key = connection_str or os.environ.get("AI21_API_KEY")
->>>>>>> upstream/main
         if self.api_key is None:
             raise ValueError(
                 "AI21 API key not set. Set AI21_API_KEY environment "
@@ -86,8 +82,6 @@ class AI21Client(Client):
         """Return whether the client supports batch inference."""
         return False
 
-<<<<<<< HEAD
-=======
     def supports_streaming_inference(self) -> bool:
         """Return whether the client supports streaming inference.
 
@@ -95,7 +89,6 @@ class AI21Client(Client):
         """
         return False
 
->>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -108,11 +101,7 @@ class AI21Client(Client):
         """
         return {"model_name": self.NAME, "engine": getattr(self, "engine")}
 
-<<<<<<< HEAD
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-=======
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
->>>>>>> upstream/main
         """
         Format response to dict.
 

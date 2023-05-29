@@ -19,11 +19,8 @@ from transformers import (
     GPTJForCausalLM,
     GPTNeoForCausalLM,
     GPTNeoXForCausalLM,
-<<<<<<< HEAD
-=======
     LlamaForCausalLM,
     LlamaTokenizer,
->>>>>>> upstream/main
     OPTForCausalLM,
     PreTrainedModel,
     PreTrainedTokenizer,
@@ -53,10 +50,7 @@ MODEL_REGISTRY = {
     "bigscience/bloom-1b7": BloomForCausalLM,
     "bigscience/bloom-3b": BloomForCausalLM,
     "bigscience/bloom-7b1": BloomForCausalLM,
-<<<<<<< HEAD
-=======
     "chainyo/alpaca-lora-7b": LlamaForCausalLM,
->>>>>>> upstream/main
     "bigscience/bloom": AutoModelForCausalLM,
     "bigscience/T0pp": AutoModelForSeq2SeqLM,
     "bigscience/T0_3B": AutoModelForSeq2SeqLM,
@@ -74,10 +68,7 @@ MODEL_REGISTRY = {
 
 MODEL_GENTYPE_REGISTRY = {
     "text-generation": AutoModelForCausalLM,
-<<<<<<< HEAD
-=======
     "llama-text-generation": LlamaForCausalLM,
->>>>>>> upstream/main
     "text2text-generation": AutoModelForSeq2SeqLM,
 }
 
@@ -150,34 +141,12 @@ class GenerationPipeline:
         Returns:
             generated text.
         """
-<<<<<<< HEAD
-        # set generation params
-        max_new_tokens = kwargs.get("max_new_tokens", 30)
-        temperature = kwargs.get("temperature", 1.0)
-        top_k = kwargs.get("top_k", 50)
-        top_p = kwargs.get("top_p", 1)
-        repetition_penalty = kwargs.get("repetition_penalty", 1)
-        do_sample = kwargs.get("do_sample", False)
-        num_return_sequences = kwargs.get("num_return_sequences", 1)
-        print(
-            f"Generating with parameters: max_new_tokens={max_new_tokens},"
-            f" temperature={temperature}, top_k={top_k}, top_p={top_p},"
-            f" repetition_penalty={repetition_penalty}, do_sample={do_sample},"
-            f" num_return_sequences={num_return_sequences}"
-        )
-
-        # If text is longer than max model length, we reduce max input length to ensure
-        # the user indicated generation tokens is preserved.
-        max_input_len = (
-            self.max_length - max_new_tokens if not self.is_encdec else self.max_length
-=======
         # If text is longer than max model length, we reduce max input length to ensure
         # the user indicated generation tokens is preserved.
         max_input_len = (
             self.max_length - kwargs.get("max_new_tokens")
             if not self.is_encdec
             else self.max_length
->>>>>>> upstream/main
         )
         encoded_prompt = self.tokenizer(
             text,
@@ -187,21 +156,6 @@ class GenerationPipeline:
             return_tensors="pt",
         )
         encoded_prompt = encoded_prompt.to(self.device)
-<<<<<<< HEAD
-
-        output_dict = self.model.generate(  # type: ignore
-            input_ids=encoded_prompt["input_ids"],
-            attention_mask=encoded_prompt["attention_mask"],
-            max_new_tokens=max_new_tokens,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            do_sample=do_sample if not self.bitsandbytes else False,
-            eos_token_id=self.tokenizer.eos_token_id,
-            pad_token_id=self.tokenizer.pad_token_id,
-            num_return_sequences=num_return_sequences,
-=======
         kwargs_to_pass = dict(
             temperature=kwargs.get("temperature"),
             top_k=kwargs.get("top_k"),
@@ -216,7 +170,6 @@ class GenerationPipeline:
             max_new_tokens=kwargs.get("max_new_tokens"),
             eos_token_id=self.tokenizer.eos_token_id,
             pad_token_id=self.tokenizer.pad_token_id,
->>>>>>> upstream/main
             output_scores=True,
             return_dict_in_generate=True,
         )
@@ -284,20 +237,8 @@ class HuggingFaceModel(Model):
         if Path(self.model_path).exists() and Path(self.model_path).is_dir():
             # Try to find config
             if (Path(self.model_path) / "config.json").exists():
-<<<<<<< HEAD
-                try:
-                    config = json.load(open(Path(self.model_path) / "config.json"))
-                    if config["_name_or_path"] != "":
-                        model_name_or_path = config["_name_or_path"]
-                    else:
-                        print(f"`_name_or_path` attribute in config set to \"\". Defaulting to {model_name_or_path}")
-                except Exception:
-                    # Wasn't able to load config
-                    print(f"Unable to load config from {self.model_path}")
-=======
                 config = json.load(open(Path(self.model_path) / "config.json"))
                 model_name_or_path = config["_name_or_path"]
->>>>>>> upstream/main
         self.model_name = model_name_or_path
         self.model_type = model_type
         if self.model_name not in MODEL_REGISTRY and self.model_type is None:
@@ -524,19 +465,6 @@ class TextGenerationModel(HuggingFaceModel):
             perc_max_gpu_mem_red,
             use_fp16,
         )
-<<<<<<< HEAD
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name, truncation_side="left", padding_side="left"
-            )
-        except ValueError:
-            tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
-                truncation_side="left",
-                padding_side="left",
-                use_fast=False,
-            )
-=======
         if (
             MODEL_REGISTRY.get(
                 self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
@@ -556,7 +484,6 @@ class TextGenerationModel(HuggingFaceModel):
                     padding_side="left",
                     use_fast=False,
                 )
->>>>>>> upstream/main
         dtype = torch.float16 if use_fp16 else "auto"
         if use_bitsandbytes:
             print("WARNING!!! Cannot use sampling with bitsandbytes.")
@@ -571,28 +498,6 @@ class TextGenerationModel(HuggingFaceModel):
                 max_memory=max_memory,
             )
         else:
-<<<<<<< HEAD
-            model = None
-            if use_fp16:
-                try:
-                    # Try to find an explicit float16 model
-                    model = MODEL_REGISTRY.get(
-                        self.model_name,
-                        MODEL_GENTYPE_REGISTRY.get(self.model_type, None),
-                    ).from_pretrained(  # type: ignore
-                        self.model_path,
-                        cache_dir=cache_dir,
-                        revision="float16",
-                        torch_dtype=dtype,
-                    )
-                except Exception:
-                    # Couldn't find explicit float16 model
-                    print(
-                        "WARNING!!! Could not find explicit"
-                        " float16 model. Using default model version."
-                    )
-            if model is None:
-=======
             try:
                 # Try to explicitely find a fp16 copy (gpt-j-6B for example)
                 model = MODEL_REGISTRY.get(
@@ -604,7 +509,6 @@ class TextGenerationModel(HuggingFaceModel):
                     torch_dtype=torch.float16,
                 )
             except Exception:
->>>>>>> upstream/main
                 model = MODEL_REGISTRY.get(
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
@@ -612,18 +516,10 @@ class TextGenerationModel(HuggingFaceModel):
                 )
         model.eval()
         print(f"Loaded Model DType {model.dtype}")
-<<<<<<< HEAD
-
-        self.is_encdec = model.config.is_encoder_decoder
-        if not self.is_encdec:
-            tokenizer.pad_token = tokenizer.eos_token
-
-=======
         self.is_encdec = model.config.is_encoder_decoder
         if not self.is_encdec:
             tokenizer.pad_token = tokenizer.eos_token
             tokenizer.pad_token_id = tokenizer.eos_token_id
->>>>>>> upstream/main
         if not use_bitsandbytes:
             if use_accelerate:
                 self._dispatch_accelerate_model(model, perc_max_gpu_mem_red)
@@ -764,7 +660,6 @@ class TextGenerationModel(HuggingFaceModel):
                 seq_token_log_probs.tolist(),
             )
         ]
-<<<<<<< HEAD
 
     def tokenize(self, 
                  prompt: Union[str, List[str]], 
@@ -894,5 +789,3 @@ class TextGenerationModel(HuggingFaceModel):
         else:
             raise ValueError(f"Unsupported model type: {self.model_type}")
         return list(zip(prompts, labels, label_probs.tolist()))
-=======
->>>>>>> upstream/main

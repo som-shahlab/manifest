@@ -6,16 +6,11 @@ How to make prompt programming with Foundation Models a little easier.
 - [Install](#install)
 - [Getting Started](#getting-started)
 - [Manifest](#manifest-components)
-<<<<<<< HEAD
-- [Local HuggingFace Models](#local-huggingface-models)
-- [Embedding Models](#embedding-models)
-=======
 - [Other Models Types](#other-models)
     - [Local HuggingFace Models](#local-huggingface-models)
     - [Chat Models](#chat-models)
     - [Embedding Models](#embedding-models)
 - [Road Map](#road-map)
->>>>>>> upstream/main
 - [Development](#development)
 - [Cite](#cite)
 
@@ -49,11 +44,7 @@ Running is simple to get started. If using OpenAI, set `export OPENAI_API_KEY=<O
 ```python
 from manifest import Manifest
 
-<<<<<<< HEAD
-# Start a manifest session to OpenAI - default `engine=text-davinci-002`
-=======
 # Start a manifest session to OpenAI - default `engine=text-davinci-003`
->>>>>>> upstream/main
 manifest = Manifest(
     client_name = "openai",
 )
@@ -68,11 +59,7 @@ Manifest is meant to be a very light weight package to help with prompt design a
 
 * All models are behind APIs
 * Supports caching of model inputs/outputs for iteration, reproducibility, and cost saving
-<<<<<<< HEAD
-* Unified API of generate, score, and embed
-=======
 * Unified API to support generate, score, and embed
->>>>>>> upstream/main
 
 ## Models
 Manifest provides model clients for [OpenAI](https://openai.com/), [AI21](https://studio.ai21.com/), [Cohere](https://cohere.ai/), [Together](https://together.xyz/), and HuggingFace (see [below](#huggingface-models) for how to use locally hosted HuggingFace models). You can toggle between the models by changing `client_name` and `client_connection`. For example, if a HuggingFace model is loaded locally, run
@@ -94,13 +81,8 @@ You can also just set `export COHERE_API_KEY=<COHERE_API_KEY>` and not use `clie
 
 You can see the model details and possible model inputs to `run()` via
 ```python
-<<<<<<< HEAD
-print(manifest.client.get_model_params())
-print(manifest.client.get_model_inputs())
-=======
 print(manifest.client_pool.get_current_client().get_model_params())
 print(manifest.client_pool.get_current_client().get_model_inputs())
->>>>>>> upstream/main
 ```
 
 ## Global Cache
@@ -146,15 +128,9 @@ results = asyncio.run(manifest.arun_batch(["Where are the cats?", "Where are the
 If something doesn't go right, you can also ask to get a raw manifest Response.
 ```python
 result_object = manifest.run(["Where are the cats?", "Where are the dogs?"], return_response=True)
-<<<<<<< HEAD
-print(result_object.get_request())
-print(result_object.is_cached())
-print(result_object.get_json_response())
-=======
 print(result_object.get_request_obj())
 print(result_object.is_cached())
 print(result_object.get_response_obj())
->>>>>>> upstream/main
 ```
 
 By default, we do not truncate results based on a stop token. You can change this by either passing a new stop token to a Manifest session or to a `run`.
@@ -167,9 +143,6 @@ If you want to change default parameters to a model, we pass those as `kwargs` t
 result = manifest.run(prompt, "Laurel", max_tokens=50)
 ```
 
-<<<<<<< HEAD
-# Local Huggingface Models
-=======
 ## Streaming Queries
 Manifest also supports streaming the model response back, assuming it's supported by the underlying client. When calling `run`, pass `stream=True` to get a streaming iterator in response.
 
@@ -210,7 +183,6 @@ responses = asyncio.run(manifest.arun_batch(prompts, max_tokens=30, chunk_size=2
 # Other Models
 
 ## Local Huggingface Models
->>>>>>> upstream/main
 To use a HuggingFace generative model, in `manifest/api` we have a Flask application that hosts the models for you.
 
 In a separate terminal or Tmux/Screen session, to load 6B parameters models, run
@@ -258,9 +230,6 @@ python3 -m manifest.api.app \
     --percent_max_gpu_mem_reduction 0.85
 ```
 
-<<<<<<< HEAD
-# Embedding Models
-=======
 ## Chat Models
 Manifest has specific support for executing against chat models in the more standard "system" / "user" dialogue. To pass in a dialogue history to Manifest, use the `run` command with a list of dictionary inputs with `role` and `content` keys using an associated chat model such as `openaichat`.
 
@@ -274,7 +243,6 @@ res = manifest.run(dialogue, max_tokens=100)
 ```
 
 ## Embedding Models
->>>>>>> upstream/main
 Manifest also supports getting embeddings from models and available APIs. We do this all through changing the `client_name` argument. You still use `run` and `abatch_run`.
 
 To use OpenAI's embedding models, simply run
@@ -291,8 +259,6 @@ python3 -m manifest.api.app \
     --device 0
 ```
 
-<<<<<<< HEAD
-=======
 # Road Map
 Here's what's coming up next
 - [ ] Clients
@@ -309,7 +275,6 @@ Here's what's coming up next
 - [ ] Local Inference
   - [ ] FlexGen
 
->>>>>>> upstream/main
 # Development
 Before submitting a PR, run
 ```bash

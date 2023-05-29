@@ -5,15 +5,9 @@ import json
 import logging
 import os
 import socket
-<<<<<<< HEAD
 import traceback
 from typing import Dict
-
-=======
-from typing import Dict
-
 import pkg_resources
->>>>>>> upstream/main
 from flask import Flask, Response, request
 
 from manifest.api.models.diffuser import DiffuserModel
@@ -106,7 +100,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=("Use deepspeed. This will override --device parameter."),
     )
-<<<<<<< HEAD
     parser.add_argument(
         "--is_flask_debug",
         action="store_true",
@@ -122,8 +115,6 @@ def parse_args() -> argparse.Namespace:
             "If that's not set, defaults to 5000"
         ),
     )
-=======
->>>>>>> upstream/main
     args = parser.parse_args()
     return args
 
@@ -131,23 +122,14 @@ def parse_args() -> argparse.Namespace:
 def is_port_in_use(port: int) -> bool:
     """Check if port is in use."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-<<<<<<< HEAD
         return s.connect_ex(("localhost", int(port))) == 0
-=======
-        return s.connect_ex(("localhost", port)) == 0
->>>>>>> upstream/main
 
 
 def main() -> None:
     """Run main."""
     kwargs = parse_args()
-<<<<<<< HEAD
     if is_port_in_use(kwargs.port):
         raise ValueError(f"Port {kwargs.port} is already in use.")
-=======
-    if is_port_in_use(PORT):
-        raise ValueError(f"Port {PORT} is already in use.")
->>>>>>> upstream/main
     global model_type
     model_type = kwargs.model_type
     model_gen_type = kwargs.model_generation_type
@@ -190,11 +172,7 @@ def main() -> None:
         perc_max_gpu_mem_red=kwargs.percent_max_gpu_mem_reduction,
         use_fp16=kwargs.fp16,
     )
-<<<<<<< HEAD
     app.run(host="0.0.0.0", port=kwargs.port, debug=kwargs.is_flask_debug)
-=======
-    app.run(host="0.0.0.0", port=PORT)
->>>>>>> upstream/main
 
 
 @app.route("/completions", methods=["POST"])
@@ -230,10 +208,7 @@ def completions() -> Response:
         )
     except Exception as e:
         logger.error(e)
-<<<<<<< HEAD
         print(traceback.format_exc())
-=======
->>>>>>> upstream/main
         return Response(
             json.dumps({"message": str(e)}),
             status=400,
@@ -324,7 +299,6 @@ def score_sequence() -> Response:
         )
 
 
-<<<<<<< HEAD
 @app.route("/score_sequence_eleuther_lm_eval", methods=["POST"])
 def score_sequence_eleuther_lm_eval() -> Response:
     """Get logprob of prompt."""
@@ -360,15 +334,12 @@ def score_sequence_eleuther_lm_eval() -> Response:
         )
 
 
-=======
->>>>>>> upstream/main
 @app.route("/params", methods=["POST"])
 def params() -> Dict:
     """Get model params."""
     return model.get_init_params()
 
 
-<<<<<<< HEAD
 @app.route("/model_config", methods=["GET"])
 def model_config() -> Dict:
     """Get model config."""
@@ -396,14 +367,6 @@ def tokenize() -> Dict:
 def index() -> str:
     """Get index completion."""
     return "Welcome to Manifest. Try using a different endpoint."
-=======
-@app.route("/")
-def index() -> str:
-    """Get index completion."""
-    fn = pkg_resources.resource_filename("metaseq", "service/index.html")
-    with open(fn) as f:
-        return f.read()
->>>>>>> upstream/main
 
 
 if __name__ == "__main__":

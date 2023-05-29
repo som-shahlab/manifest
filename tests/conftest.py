@@ -4,11 +4,6 @@ import shutil
 from pathlib import Path
 from typing import Generator
 
-<<<<<<< HEAD
-import pytest
-import redis
-
-=======
 import numpy as np
 import pytest
 import redis
@@ -101,7 +96,6 @@ def request_diff() -> DiffusionRequest:
     request = DiffusionRequest(prompt="hello")
     return request
 
->>>>>>> upstream/main
 
 @pytest.fixture
 def sqlite_cache(tmp_path: Path) -> Generator[str, None, None]:

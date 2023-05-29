@@ -1,22 +1,6 @@
 """Client class."""
 import asyncio
 import copy
-<<<<<<< HEAD
-import logging
-import math
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
-import aiohttp
-import requests
-from tenacity import RetryCallState, retry, stop_after_attempt, wait_random_exponential
-
-from manifest.request import DEFAULT_REQUEST_KEYS, NOT_CACHE_KEYS, Request
-from manifest.response import RESPONSE_CONSTRUCTORS, Response
-
-logger = logging.getLogger(__name__)
-
-=======
 import json
 import logging
 import math
@@ -56,7 +40,6 @@ ATTEMPTS_TIMEOUT = 120
 # e.code == 500 or 502 occurs when server error
 API_ERROR_CODE = {408, 429, 500, 502}
 
->>>>>>> upstream/main
 
 def retry_if_ratelimit(retry_base: RetryCallState) -> bool:
     """Return whether to retry if ratelimited."""
@@ -65,20 +48,14 @@ def retry_if_ratelimit(retry_base: RetryCallState) -> bool:
             exception = cast(
                 requests.exceptions.HTTPError, retry_base.outcome.exception()
             )
-<<<<<<< HEAD
-            if exception.response.status_code == 429:  # type: ignore
-=======
             # 500 is a server error, 429 is a rate limit error
             if exception.response.status_code in API_ERROR_CODE:  # type: ignore
->>>>>>> upstream/main
                 return True
     except Exception:
         pass
     return False
 
 
-<<<<<<< HEAD
-=======
 def return_error_response(retry_state: RetryCallState) -> dict:
     """Return error response if all retries failed."""
     request_params = retry_state.args[1]
@@ -98,7 +75,6 @@ def return_error_response(retry_state: RetryCallState) -> dict:
     }
 
 
->>>>>>> upstream/main
 class Client(ABC):
     """Client class."""
 
@@ -106,10 +82,7 @@ class Client(ABC):
     PARAMS: Dict[str, Tuple[str, Any]] = {}
     REQUEST_CLS = Request
     NAME: str = None
-<<<<<<< HEAD
-=======
     IS_CHAT: bool = False
->>>>>>> upstream/main
 
     def __init__(
         self, connection_str: Optional[str] = None, client_args: Dict[str, Any] = {}
@@ -135,10 +108,7 @@ class Client(ABC):
         """
         Connect to client.
 
-<<<<<<< HEAD
-=======
         Override in child client class.
->>>>>>> upstream/main
         Args:
             connection_str: connection string.
         """
@@ -146,26 +116,18 @@ class Client(ABC):
 
     @abstractmethod
     def close(self) -> None:
-<<<<<<< HEAD
-        """Close the client."""
-=======
         """Close the client.
 
         Override in child client class.
         """
->>>>>>> upstream/main
         raise NotImplementedError()
 
     @abstractmethod
     def get_generation_url(self) -> str:
-<<<<<<< HEAD
-        """Get generation URL."""
-=======
         """Get generation URL.
 
         Override in child client class.
         """
->>>>>>> upstream/main
         raise NotImplementedError()
 
     @abstractmethod
@@ -173,10 +135,7 @@ class Client(ABC):
         """
         Get generation header.
 
-<<<<<<< HEAD
-=======
         Override in child client class.
->>>>>>> upstream/main
         Returns:
             header.
         """
@@ -184,9 +143,6 @@ class Client(ABC):
 
     @abstractmethod
     def supports_batch_inference(self) -> bool:
-<<<<<<< HEAD
-        """Return whether the client supports batch inference."""
-=======
         """Return whether the client supports batch inference.
 
         Override in child client class.
@@ -199,7 +155,6 @@ class Client(ABC):
 
         Override in child client class.
         """
->>>>>>> upstream/main
         raise NotImplementedError()
 
     @abstractmethod
@@ -210,17 +165,12 @@ class Client(ABC):
         By getting model params from the server, we can add to request
         and make sure cache keys are unique to model.
 
-<<<<<<< HEAD
-=======
         Override in child client class.
->>>>>>> upstream/main
         Returns:
             model params.
         """
         raise NotImplementedError()
 
-<<<<<<< HEAD
-=======
     def get_tokenizer(self, model: str) -> Tuple[Any, int]:
         """Get tokenizer for model.
 
@@ -232,7 +182,6 @@ class Client(ABC):
         """
         return None, -1
 
->>>>>>> upstream/main
     def get_model_inputs(self) -> List:
         """
         Get allowable model inputs.
@@ -242,8 +191,6 @@ class Client(ABC):
         """
         return list(self.PARAMS.keys())
 
-<<<<<<< HEAD
-=======
     def split_usage(self, request: Dict, choices: List[str]) -> List[Dict[str, int]]:
         """Split usage into list of usages for each prompt."""
         # TODO: add this in using default tokenizer
@@ -293,7 +240,6 @@ class Client(ABC):
                     response["usage"] = split_usage
         return response
 
->>>>>>> upstream/main
     def get_request(
         self, prompt: Union[str, List[str]], request_args: Dict[str, Any]
     ) -> Request:
@@ -308,41 +254,28 @@ class Client(ABC):
             request.
         """
         params = {"prompt": prompt}
-<<<<<<< HEAD
-        for key in self.PARAMS:
-            params[key] = request_args.pop(key, getattr(self, key))
-=======
         # Adds default values from self.PARAMS if not in request_args
         for key in self.PARAMS:
             params[key] = request_args.pop(key, getattr(self, key))
         # Allows for overriding DEFAULT_REQUEST_KEYS even if they are not
         # in self.PARAMS. Note that DEFAULT_REQUEST_KEYS match the default
         # values in Request.
->>>>>>> upstream/main
         for key in DEFAULT_REQUEST_KEYS:
             if key not in params and key in request_args:
                 params[key] = request_args.pop(key)
         return self.REQUEST_CLS(**params)  # type: ignore
 
-<<<<<<< HEAD
-    def get_request_params(self, request: Request) -> Dict[str, Any]:
-=======
     def _get_request_params(self, request: Request) -> Dict[str, Any]:
->>>>>>> upstream/main
         """Get request params.
 
         Add default keys that we need for requests such as batch_size.
         We drop these before sending to the model.
         """
         params_to_add = DEFAULT_REQUEST_KEYS.copy()
-<<<<<<< HEAD
-        params_to_add.update(self.PARAMS)
-=======
         # This will override DEFAULT_REQUEST_KEYS with those in PARAMS
         params_to_add.update(self.PARAMS)
         # to_dict will handle parameter renaming but not any
         # default value handling - that is done in get_request()
->>>>>>> upstream/main
         request_params = request.to_dict(params_to_add)
         return request_params
 
@@ -351,45 +284,6 @@ class Client(ABC):
 
         Skip keys that are not cache keys such as batch_size.
         """
-<<<<<<< HEAD
-        request_params = self.get_request_params(request)
-        for key in NOT_CACHE_KEYS:
-            request_params.pop(key, None)
-        request_params.update(self.get_model_params())
-        return request_params
-
-    def split_usage(self, request: Dict, choices: List[str]) -> List[Dict[str, int]]:
-        """Split usage into list of usages for each prompt."""
-        return []
-
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-        """
-        Format response to dict.
-
-        Args:
-            response: response
-            request: request
-
-        Return:
-            response as dict
-        """
-        if "choices" not in response:
-            raise ValueError(f"Invalid response: {response}")
-        if "usage" in response:
-            # Handle splitting the usages for batch requests
-            if len(response["choices"]) == 1:
-                if isinstance(response["usage"], list):
-                    response["usage"] = response["usage"][0]
-                response["usage"] = [response["usage"]]
-            else:
-                # Try to split usage
-                split_usage = self.split_usage(request, response["choices"])
-                if split_usage:
-                    response["usage"] = split_usage
-        return response
-
-    def split_requests(
-=======
         request_params = self._get_request_params(request)
         for key in NOT_CACHE_KEYS:
             request_params.pop(key, None)
@@ -399,7 +293,6 @@ class Client(ABC):
         return request_params
 
     def _split_requests(
->>>>>>> upstream/main
         self, request_params: Dict[str, Any], batch_size: int, key: str = "prompt"
     ) -> List[Dict[str, Any]]:
         """Split request into batch_sized request.
@@ -421,13 +314,6 @@ class Client(ABC):
             request_params_list.append(params)
         return request_params_list
 
-<<<<<<< HEAD
-    @retry(
-        reraise=True,
-        retry=retry_if_ratelimit,
-        wait=wait_random_exponential(min=1, max=60),
-        stop=stop_after_attempt(10),
-=======
     def _get_model_choices(self, response: Dict) -> ModelChoices:
         """Format response to ModelChoices."""
         # Array or text response
@@ -498,7 +384,6 @@ class Client(ABC):
         retry=retry_if_ratelimit,
         wait=wait_random_exponential(min=1, max=ATTEMPTS_TIMEOUT),
         stop=stop_after_attempt(ATTEMPTS_BEFORE_STOP),
->>>>>>> upstream/main
     )
     def _run_completion(
         self, request_params: Dict[str, Any], retry_timeout: int
@@ -512,10 +397,7 @@ class Client(ABC):
         Returns:
             response as dict.
         """
-<<<<<<< HEAD
-=======
         request_params = self.preprocess_request_params(request_params)
->>>>>>> upstream/main
         post_str = self.get_generation_url()
         res = requests.post(
             post_str,
@@ -528,46 +410,27 @@ class Client(ABC):
         except requests.exceptions.HTTPError:
             logger.error(res.json())
             raise requests.exceptions.HTTPError(res.json())
-<<<<<<< HEAD
-        return self.format_response(res.json(), request_params)
-=======
         return self.postprocess_response(res.json(), request_params)
->>>>>>> upstream/main
 
     @retry(
         reraise=True,
         retry=retry_if_ratelimit,
-<<<<<<< HEAD
-        wait=wait_random_exponential(min=1, max=60),
-        stop=stop_after_attempt(10),
-    )
-    async def _arun_completion(
-        self, request_params: Dict[str, Any], retry_timeout: int, batch_size: int
-=======
         wait=wait_random_exponential(min=1, max=ATTEMPTS_TIMEOUT),
         stop=stop_after_attempt(ATTEMPTS_BEFORE_STOP),
     )
     async def _arun_completion(
         self, request_params: Dict[str, Any], retry_timeout: int
->>>>>>> upstream/main
     ) -> Dict:
         """Async execute completion request.
 
         Args:
             request_params: request params.
             retry_timeout: retry timeout.
-<<<<<<< HEAD
-            batch_size: batch size for requests.
-=======
->>>>>>> upstream/main
 
         Returns:
             response as dict.
         """
-<<<<<<< HEAD
-=======
         request_params = self.preprocess_request_params(request_params)
->>>>>>> upstream/main
         post_str = self.get_generation_url()
         async with aiohttp.ClientSession(timeout=retry_timeout) as session:
             async with session.post(
@@ -578,13 +441,6 @@ class Client(ABC):
             ) as res:
                 res.raise_for_status()
                 res_json = await res.json(content_type=None)
-<<<<<<< HEAD
-                return self.format_response(res_json, request_params)
-
-    def run_request(self, request: Request) -> Response:
-        """
-        Get request string function.
-=======
                 return self.postprocess_response(res_json, request_params)
 
     @retry(
@@ -639,7 +495,6 @@ class Client(ABC):
     def run_request(self, request: Request) -> Response:
         """
         Run request.
->>>>>>> upstream/main
 
         Args:
             request: request.
@@ -647,14 +502,6 @@ class Client(ABC):
         Returns:
             response.
         """
-<<<<<<< HEAD
-        if isinstance(request.prompt, list) and not self.supports_batch_inference():
-            raise ValueError(
-                f"{self.__class__.__name__} does not support batch inference."
-            )
-
-        request_params = self.get_request_params(request)
-=======
         # Make everything list for consistency
         if isinstance(request.prompt, list):
             prompt_list = request.prompt
@@ -676,28 +523,11 @@ class Client(ABC):
             )
             batch_size = 1
 
->>>>>>> upstream/main
         # Take the default keys we need and drop the rest as they
         # are not part of the model request.
         retry_timeout = request_params.pop("client_timeout")
         for key in DEFAULT_REQUEST_KEYS:
             request_params.pop(key, None)
-<<<<<<< HEAD
-        response_dict = self._run_completion(request_params, retry_timeout)
-        return Response(
-            response_dict,
-            cached=False,
-            request_params=request_params,
-            **RESPONSE_CONSTRUCTORS.get(self.NAME, {}),  # type: ignore
-        )
-
-    async def arun_batch_request(self, request: Request) -> Response:
-        """
-        Get async request string function.
-
-        Args:
-            request: request.
-=======
 
         # Make sure requests are in the request length
         # If no tokenizer is set or not LM request, this
@@ -727,7 +557,6 @@ class Client(ABC):
 
         Args:
             request: request.s
->>>>>>> upstream/main
 
         Returns:
             response.
@@ -740,11 +569,7 @@ class Client(ABC):
                 "request.prompt must be a list for async batch inference."
             )
 
-<<<<<<< HEAD
-        request_params = self.get_request_params(request)
-=======
         request_params = self._get_request_params(request)
->>>>>>> upstream/main
         # Take the default keys we need and drop the rest as they
         # are not part of the model request.
         retry_timeout = request_params.pop("client_timeout")
@@ -753,8 +578,6 @@ class Client(ABC):
         for key in DEFAULT_REQUEST_KEYS:
             request_params.pop(key, None)
 
-<<<<<<< HEAD
-=======
         # Make sure requests are in the request length
         # If no tokenizer is set or not LM request, this
         # will do nothing
@@ -764,39 +587,10 @@ class Client(ABC):
             )
 
         # Batch requests
->>>>>>> upstream/main
         num_batches = len(request.prompt) // batch_size
         if len(request.prompt) % batch_size != 0:
             batch_size = int(math.ceil(len(request.prompt) / (num_batches + 1)))
 
-<<<<<<< HEAD
-        request_batches = self.split_requests(request_params, batch_size)
-        all_tasks = [
-            asyncio.create_task(self._arun_completion(batch, retry_timeout, batch_size))
-            for batch in request_batches
-        ]
-        responses = await asyncio.gather(*all_tasks)
-        # Flatten responses
-        choices = []
-        usages = []
-        for res_dict in responses:
-            choices.extend(res_dict["choices"])
-            if "usage" in res_dict:
-                usages.extend(res_dict["usage"])
-        final_response_dict = {"choices": choices}
-        if usages:
-            final_response_dict["usage"] = usages
-        return Response(
-            final_response_dict,
-            cached=False,
-            request_params=request_params,
-            **RESPONSE_CONSTRUCTORS.get(self.NAME, {}),  # type: ignore
-        )
-
-    def get_score_prompt_request(
-        self,
-        request: Request,
-=======
         request_batches = self._split_requests(request_params, batch_size)
         all_tasks = [
             asyncio.create_task(self._arun_completion(batch, retry_timeout))
@@ -888,7 +682,6 @@ class Client(ABC):
     def run_score_prompt_request(
         self,
         request: LMScoreRequest,
->>>>>>> upstream/main
     ) -> Response:
         """
         Get the logit score of the prompt via a forward pass of the model.
@@ -897,12 +690,7 @@ class Client(ABC):
             request: request.
 
         Returns:
-<<<<<<< HEAD
-            request function that takes no input.
-            request parameters as dict.
-=======
             response.
->>>>>>> upstream/main
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support prompt scoring request."

@@ -1,9 +1,4 @@
 """Manifest class."""
-<<<<<<< HEAD
-import copy
-import logging
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
-=======
 import asyncio
 import copy
 import logging
@@ -19,7 +14,6 @@ from typing import (
     Union,
     cast,
 )
->>>>>>> upstream/main
 
 import numpy as np
 
@@ -27,19 +21,6 @@ from manifest.caches.noop import NoopCache
 from manifest.caches.postgres import PostgresCache
 from manifest.caches.redis import RedisCache
 from manifest.caches.sqlite import SQLiteCache
-<<<<<<< HEAD
-from manifest.clients.ai21 import AI21Client
-from manifest.clients.cohere import CohereClient
-from manifest.clients.dummy import DummyClient
-from manifest.clients.huggingface import HuggingFaceClient
-from manifest.clients.huggingface_embedding import HuggingFaceEmbeddingClient
-from manifest.clients.openai import OpenAIClient
-from manifest.clients.openai_chat import OpenAIChatClient
-from manifest.clients.openai_embedding import OpenAIEmbeddingClient
-from manifest.clients.toma import TOMAClient
-from manifest.request import Request
-from manifest.response import Response
-=======
 from manifest.clients.client import Client
 from manifest.clients.huggingface import HuggingFaceClient
 from manifest.connections.client_pool import (
@@ -49,38 +30,10 @@ from manifest.connections.client_pool import (
 )
 from manifest.request import LMChatRequest, LMScoreRequest, Request
 from manifest.response import ModelChoices, Response, Usage, Usages
->>>>>>> upstream/main
 
 logging.getLogger("openai").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-CLIENT_CONSTRUCTORS = {
-    OpenAIClient.NAME: OpenAIClient,
-    OpenAIChatClient.NAME: OpenAIChatClient,
-    OpenAIEmbeddingClient.NAME: OpenAIEmbeddingClient,
-    CohereClient.NAME: CohereClient,
-    AI21Client.NAME: AI21Client,
-    HuggingFaceClient.NAME: HuggingFaceClient,
-    HuggingFaceEmbeddingClient.NAME: HuggingFaceEmbeddingClient,
-    DummyClient.NAME: DummyClient,
-    TOMAClient.NAME: TOMAClient,
-}
-
-# Diffusion
-DIFFUSION_CLIENTS = ["diffuser", "tomadiffuser"]
-try:
-    from manifest.clients.diffuser import DiffuserClient
-    from manifest.clients.toma_diffuser import TOMADiffuserClient
-
-    CLIENT_CONSTRUCTORS[DiffuserClient.NAME] = DiffuserClient
-    CLIENT_CONSTRUCTORS[TOMADiffuserClient.NAME] = TOMADiffuserClient
-except Exception:
-    logger.info("Diffusion not supported. Skipping import.")
-    pass
-
-=======
->>>>>>> upstream/main
 
 CACHE_CONSTRUCTORS = {
     "redis": RedisCache,
@@ -95,15 +48,10 @@ class Manifest:
 
     def __init__(
         self,
-<<<<<<< HEAD
-        client_name: str = "openai",
-        client_connection: Optional[str] = None,
-=======
         client_name: Optional[str] = None,
         client_connection: Optional[str] = None,
         client_pool: Optional[List[ClientConnection]] = None,
         client_pool_schedule: str = "round_robin",
->>>>>>> upstream/main
         cache_name: str = "noop",
         cache_connection: Optional[str] = None,
         stop_token: str = "",
@@ -115,11 +63,8 @@ class Manifest:
         Args:
             client_name: name of client.
             client_connection: connection string for client.
-<<<<<<< HEAD
-=======
             client_pool: list of client connections for multi-client.
             client_pool_schedule: schedule for client pool.
->>>>>>> upstream/main
             cache_name: name of cache.
             cache_connection: connection string for cache.
             stop_token: stop token prompt generation.
@@ -127,20 +72,6 @@ class Manifest:
 
         Remaining kwargs sent to client and cache.
         """
-<<<<<<< HEAD
-        if client_name not in CLIENT_CONSTRUCTORS:
-            if client_name in DIFFUSION_CLIENTS:
-                raise ImportError(
-                    f"Diffusion client {client_name} requires the proper install. "
-                    "Make sure to run `pip install manifest-ml[diffusers]` "
-                    "or install Pillow."
-                )
-            else:
-                raise ValueError(
-                    f"Unknown client name: {client_name}. "
-                    f"Choices are {list(CLIENT_CONSTRUCTORS.keys())}"
-                )
-=======
         if not client_name and not client_pool:
             raise ValueError(
                 "Must specify client_name or client_pool. "
@@ -160,25 +91,14 @@ class Manifest:
         self.client_pool = ClientConnectionPool(
             client_pool, client_pool_schedule, client_args=kwargs
         )
->>>>>>> upstream/main
         if cache_name not in CACHE_CONSTRUCTORS:
             raise ValueError(
                 f"Unknown cache name: {cache_name}. "
                 f"Choices are {list(CACHE_CONSTRUCTORS.keys())}"
             )
-<<<<<<< HEAD
-        self.client_name = client_name
-        # Must pass kwargs as dict for client "pop" methods removed used arguments
-        self.cache = CACHE_CONSTRUCTORS[cache_name](  # type: ignore
-            cache_connection, self.client_name, cache_args=kwargs
-        )
-        self.client = CLIENT_CONSTRUCTORS[self.client_name](  # type: ignore
-            client_connection, client_args=kwargs
-=======
         # Must pass kwargs as dict for client "pop" methods removed used arguments
         self.cache = CACHE_CONSTRUCTORS[cache_name](  # type: ignore
             cache_connection, self.client_pool.request_type, cache_args=kwargs
->>>>>>> upstream/main
         )
         if len(kwargs) > 0:
             raise ValueError(f"{list(kwargs.items())} arguments are not recognized.")
@@ -187,51 +107,9 @@ class Manifest:
 
     def close(self) -> None:
         """Close the client and cache."""
-<<<<<<< HEAD
-        self.client.close()
-        self.cache.close()
-
-    def change_client(
-        self,
-        client_name: Optional[str] = None,
-        client_connection: Optional[str] = None,
-        stop_token: Optional[str] = None,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Change manifest client.
-
-        Args:
-            client_name: name of client.
-            client_connection: connection string for client.
-            stop_token: stop token prompt generation.
-                        Can be overridden in run
-
-        Remaining kwargs sent to client.
-        """
-        if client_name:
-            if client_name not in CLIENT_CONSTRUCTORS:
-                raise ValueError(
-                    f"Unknown client name: {client_name}. "
-                    f"Choices are {list(CLIENT_CONSTRUCTORS.keys())}"
-                )
-            self.client_name = client_name
-            self.client = CLIENT_CONSTRUCTORS[client_name](  # type: ignore
-                client_connection, client_args=kwargs
-            )
-            if len(kwargs) > 0:
-                raise ValueError(
-                    f"{list(kwargs.items())} arguments are not recognized."
-                )
-
-        if stop_token is not None:
-            self.stop_token = stop_token
-
-=======
         self.client_pool.close()
         self.cache.close()
 
->>>>>>> upstream/main
     def _validate_kwargs(self, kwargs: Dict, request_params: Request) -> None:
         """Validate kwargs.
 
@@ -259,10 +137,7 @@ class Manifest:
     def _split_cached_requests(
         self,
         request: Request,
-<<<<<<< HEAD
-=======
         client: Client,
->>>>>>> upstream/main
         overwrite_cache: bool,
     ) -> Tuple[Dict[int, Response], Request]:
         """Split a request into cached responses and Requests to run.
@@ -278,37 +153,20 @@ class Manifest:
         cached_idx_to_response: Dict[int, Response] = {}
         new_request = copy.deepcopy(request)
         if not overwrite_cache:
-<<<<<<< HEAD
-            if isinstance(new_request.prompt, list):
-=======
             if isinstance(new_request.prompt, list) and not isinstance(
                 request, LMChatRequest
             ):
->>>>>>> upstream/main
                 new_request.prompt = []
                 for idx, prompt_str in enumerate(request.prompt):
                     single_request = copy.deepcopy(request)
                     single_request.prompt = prompt_str
                     possible_response = self.cache.get(
-<<<<<<< HEAD
-                        self.client.get_cache_key(single_request)
-=======
                         client.get_cache_key(single_request)
->>>>>>> upstream/main
                     )
                     if possible_response:
                         cached_idx_to_response[idx] = possible_response
                     else:
                         new_request.prompt.append(prompt_str)
-<<<<<<< HEAD
-            else:
-                possible_response = self.cache.get(
-                    self.client.get_cache_key(new_request)
-                )
-                if possible_response:
-                    cached_idx_to_response[0] = possible_response
-                    new_request.prompt = None
-=======
             # Chat or single string requests are not broken down into
             # subprompts for caching.
             elif (isinstance(new_request.prompt, str)) or (
@@ -324,16 +182,12 @@ class Manifest:
                     f"Invalid prompt type: {type(new_request.prompt)}"
                     f" with request type: {type(request)}"
                 )
->>>>>>> upstream/main
         return cached_idx_to_response, new_request
 
     def _stitch_responses_and_cache(
         self,
         request: Request,
-<<<<<<< HEAD
-=======
         client: Client,
->>>>>>> upstream/main
         response: Union[Response, None],
         cached_idx_to_response: Dict[int, Response],
     ) -> Response:
@@ -342,47 +196,6 @@ class Manifest:
         # cached entries.
         all_model_choices = []
         all_usages = []
-<<<<<<< HEAD
-        all_input_prompts = []
-        response_idx = 0
-        number_prompts = len(cached_idx_to_response)
-        single_output = False
-        if response:
-            if isinstance(response.get_request()["prompt"], str):
-                single_output = True
-                number_prompts += 1
-            else:
-                number_prompts += len(response.get_request()["prompt"])
-        response_gen_key = None
-        response_logits_key = None
-        response_item_key = None
-        for idx in range(number_prompts):
-            if idx in cached_idx_to_response:
-                cached_res = cached_idx_to_response[idx]
-                response_gen_key = cached_res.generation_key
-                response_logits_key = cached_res.logits_key
-                response_item_key = cached_res.item_key
-                response_usage_key = cached_res.usage_key
-                all_input_prompts.append(cached_res.get_request()["prompt"])
-                json_response = cached_res.get_json_response()
-                if request.n == 1:
-                    assert (
-                        len(json_response[response_gen_key]) == 1
-                    ), "cached response should have only one choice"
-                all_model_choices.extend(json_response[response_gen_key])
-                if response_usage_key:
-                    all_usages.extend(json_response[response_usage_key])
-            else:
-                assert response is not None, "response should not be None"
-                response = cast(Response, response)
-                response_gen_key = response.generation_key
-                response_logits_key = response.logits_key
-                response_item_key = response.item_key
-                response_usage_key = response.usage_key
-                # the choices list in the response is a flat one.
-                # length is request.n * num_prompts
-                current_choices = response.get_json_response()[response_gen_key][
-=======
         all_input_prompts: List[Union[str, List[str], List[Dict]]] = []
         response_idx = 0
         number_prompts = len(cached_idx_to_response)
@@ -428,32 +241,10 @@ class Manifest:
                 # the choices list in the response is a flat one.
                 # length is request.n * num_prompts
                 current_choices = response.get_response_obj().choices[
->>>>>>> upstream/main
                     response_idx * request.n : (response_idx + 1) * request.n
                 ]
                 all_model_choices.extend(current_choices)
 
-<<<<<<< HEAD
-                if isinstance(response.get_request()["prompt"], list):
-                    prompt = response.get_request()["prompt"][response_idx]
-                else:
-                    prompt = str(response.get_request()["prompt"])
-                if response_usage_key:
-                    usage = response.get_json_response()[response_usage_key][
-                        response_idx * request.n : (response_idx + 1) * request.n
-                    ]
-                    all_usages.extend(usage)
-                all_input_prompts.append(prompt)
-                # set cache
-                new_request = copy.deepcopy(request)
-                new_request.prompt = prompt
-                cache_key = self.client.get_cache_key(new_request)
-                new_response_key = copy.deepcopy(response.get_json_response())
-                new_response_key[response_gen_key] = current_choices
-                if response_usage_key:
-                    new_response_key[response_usage_key] = usage
-                self.cache.set(cache_key, new_response_key)
-=======
                 if isinstance(
                     response.get_request_obj().prompt, list
                 ) and not isinstance(request, LMChatRequest):
@@ -487,28 +278,10 @@ class Manifest:
                 new_response._response.choices = current_choices
                 new_response._usages = Usages(usages=(usages or []))
                 self.cache.set(cache_key, new_response.to_dict(drop_request=True))
->>>>>>> upstream/main
                 response_idx += 1
 
         new_request = copy.deepcopy(request)
         new_request.prompt = (
-<<<<<<< HEAD
-            all_input_prompts
-            if len(all_input_prompts) > 1 or not single_output
-            else all_input_prompts[0]
-        )
-        new_response = {response_gen_key: all_model_choices}
-        if response_usage_key:
-            new_response[response_usage_key] = all_usages
-        response_obj = Response(
-            new_response,
-            cached=len(cached_idx_to_response) > 0,
-            request_params=self.client.get_cache_key(new_request),
-            generation_key=response_gen_key,
-            logits_key=response_logits_key,
-            item_key=response_item_key,
-            usage_key=response_usage_key,
-=======
             all_input_prompts  # type: ignore
             if len(all_input_prompts) > 1 or not single_completion_output
             else all_input_prompts[0]
@@ -520,15 +293,11 @@ class Manifest:
             usages=Usages(usages=all_usages),
             response_type=response_type,
             request_type=request_type,
->>>>>>> upstream/main
         )
         return response_obj
 
     def run(
         self,
-<<<<<<< HEAD
-        prompt: Union[str, List[str]],
-=======
         prompt: Union[str, List[str], List[Dict[str, str]]],
         overwrite_cache: bool = False,
         stop_token: Optional[str] = None,
@@ -621,7 +390,6 @@ class Manifest:
         self,
         prompt: Union[str, List[str]],
         client: Client,
->>>>>>> upstream/main
         overwrite_cache: bool = False,
         stop_token: Optional[str] = None,
         return_response: bool = False,
@@ -632,10 +400,7 @@ class Manifest:
 
         Args:
             prompt: prompt(s) to run.
-<<<<<<< HEAD
-=======
             client: client to run.
->>>>>>> upstream/main
             overwrite_cache: whether to overwrite cache.
             stop_token: stop token for prompt generation.
                         Default is self.stop_token.
@@ -646,29 +411,15 @@ class Manifest:
             response from prompt.
         """
         is_batch = isinstance(prompt, list)
-<<<<<<< HEAD
-
-        stop_token = stop_token if stop_token is not None else self.stop_token
-        # Must pass kwargs as dict for client "pop" methods removed used arguments
-        request_params = self.client.get_request(prompt, kwargs)
-=======
         stop_token = stop_token if stop_token is not None else self.stop_token
         # Must pass kwargs as dict for client "pop" methods removed used arguments
         request_params = client.get_request(prompt, kwargs)
->>>>>>> upstream/main
         # Avoid nested list of results - enforce n = 1 for batch
         if is_batch and request_params.n > 1:
             raise ValueError("Batch mode does not support n > 1.")
         self._validate_kwargs(kwargs, request_params)
 
         cached_idx_to_response, request_params = self._split_cached_requests(
-<<<<<<< HEAD
-            request_params, overwrite_cache
-        )
-        # If not None value or empty list - run new request
-        if request_params.prompt:
-            response = self.client.run_request(request_params)
-=======
             request_params, client, overwrite_cache
         )
         # If not None value or empty list - run new request
@@ -677,32 +428,22 @@ class Manifest:
             self.client_pool.start_timer()
             response = client.run_request(request_params)
             self.client_pool.end_timer()
->>>>>>> upstream/main
         else:
             # Nothing to run
             response = None
 
         final_response = self._stitch_responses_and_cache(
             request=request_params,
-<<<<<<< HEAD
-            response=response,
-            cached_idx_to_response=cached_idx_to_response,
-        )
-
-=======
             client=client,
             response=response,
             cached_idx_to_response=cached_idx_to_response,
         )
->>>>>>> upstream/main
         # Extract text results
         if return_response:
             return final_response
         else:
             return final_response.get_response(stop_token, is_batch)
 
-<<<<<<< HEAD
-=======
     def _run_chat(
         self,
         prompt: List[Dict[str, str]],
@@ -835,25 +576,19 @@ class Manifest:
                 cached_idx_to_response=cached_idx_to_response,
             )
 
->>>>>>> upstream/main
     async def arun_batch(
         self,
         prompts: List[str],
         overwrite_cache: bool = False,
         stop_token: Optional[str] = None,
         return_response: bool = False,
-<<<<<<< HEAD
-=======
         chunk_size: int = -1,
         verbose: bool = False,
->>>>>>> upstream/main
         **kwargs: Any,
     ) -> Union[List[str], List[np.ndarray], Response]:
         """
         Run a batch of prompts with async.
 
-<<<<<<< HEAD
-=======
         If the client pool is a single client, all prompts will be sent
         to one client and batch_size (which is passed it as kwargs) will
         determine how the prompts are split.
@@ -862,16 +597,10 @@ class Manifest:
         into chunks and sent to the clients. Each client will split the
         chunk into batch_size prompts to send to the model.
 
->>>>>>> upstream/main
         Args:
             prompts: prompts to run.
             overwrite_cache: whether to overwrite cache.
             stop_token: stop token for prompt generation.
-<<<<<<< HEAD
-                        Default is self.stop_token.
-                        "" for no stop token.
-            return_response: whether to return Response object.
-=======
                 Default is self.stop_token.
                 "" for no stop token.
             return_response: whether to return Response object.
@@ -882,16 +611,10 @@ class Manifest:
                 setting chunk_size. For a client pool, chunk_size
                 can be used to distribute the load across the clients.
             verbose: whether to print progress of async tasks.
->>>>>>> upstream/main
 
         Returns:
             response from prompt.
         """
-<<<<<<< HEAD
-        stop_token = stop_token if stop_token is not None else self.stop_token
-        # Must pass kwargs as dict for client "pop" methods removed used arguments
-        request_params = self.client.get_request(prompts, kwargs)
-=======
         if not isinstance(prompts, list):
             raise ValueError("Prompts must be a list of strings.")
         if not prompts:
@@ -959,20 +682,12 @@ class Manifest:
         """
         # Must pass kwargs as dict for client "pop" methods removed used arguments
         request_params = client.get_request(prompts, kwargs)
->>>>>>> upstream/main
         # Avoid nested list of results - enforce n = 1 for batch
         if request_params.n > 1:
             raise ValueError("Batch mode does not support n > 1.")
         self._validate_kwargs(kwargs, request_params)
 
         cached_idx_to_response, request_params = self._split_cached_requests(
-<<<<<<< HEAD
-            request_params, overwrite_cache
-        )
-        # If not None value or empty list - run new request
-        if request_params.prompt:
-            response = await self.client.arun_batch_request(request_params)
-=======
             request_params, client, overwrite_cache
         )
         # If not None value or empty list - run new request
@@ -980,33 +695,17 @@ class Manifest:
             self.client_pool.start_timer()
             response = await client.arun_batch_request(request_params, verbose=verbose)
             self.client_pool.end_timer()
->>>>>>> upstream/main
         else:
             # Nothing to run
             response = None
 
         final_response = self._stitch_responses_and_cache(
             request=request_params,
-<<<<<<< HEAD
-            response=response,
-            cached_idx_to_response=cached_idx_to_response,
-        )
-
-        # Extract text results
-        if return_response:
-            return final_response
-        else:
-            return cast(
-                Union[List[str], List[np.ndarray]],
-                final_response.get_response(stop_token, True),
-            )
-=======
             client=client,
             response=response,
             cached_idx_to_response=cached_idx_to_response,
         )
         return final_response
->>>>>>> upstream/main
 
     def score_prompt(
         self,
@@ -1026,25 +725,6 @@ class Manifest:
         Returns:
             response from prompt.
         """
-<<<<<<< HEAD
-        # Must pass kwargs as dict for client "pop" methods removed used arguments
-        request_params = self.client.get_request(prompt, kwargs)
-        request_params.request_type = "score_prompt"
-
-        if request_params.n > 1:
-            raise ValueError("Sequence scoring does not support n > 1.")
-        self._validate_kwargs(kwargs, request_params)
-
-        cached_idx_to_response, request_params = self._split_cached_requests(
-            request_params, overwrite_cache
-        )
-        # If not None value or empty list - run new request
-        if request_params.prompt:
-            try:
-                response = cast(
-                    HuggingFaceClient, self.client
-                ).get_score_prompt_request(request_params)
-=======
         client = self.client_pool.get_next_client()
         # Must pass kwargs as dict for client "pop" methods removed used arguments
         request_params = client.get_request(prompt, kwargs)
@@ -1063,7 +743,6 @@ class Manifest:
                 response = cast(HuggingFaceClient, client).run_score_prompt_request(
                     request_params_as_score
                 )
->>>>>>> upstream/main
             except AttributeError:
                 raise ValueError("`score_prompt` only supported for HF models.")
         else:
@@ -1071,12 +750,8 @@ class Manifest:
             response = None
 
         final_response = self._stitch_responses_and_cache(
-<<<<<<< HEAD
-            request=request_params,
-=======
             request=request_params_as_score,
             client=client,
->>>>>>> upstream/main
             response=response,
             cached_idx_to_response=cached_idx_to_response,
         )

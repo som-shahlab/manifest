@@ -46,11 +46,7 @@ class TOMADiffuserClient(TOMAClient):
         """
         return {"model_name": self.NAME, "engine": getattr(self, "engine")}
 
-<<<<<<< HEAD
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-=======
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
->>>>>>> upstream/main
         """
         Format response to dict.
 

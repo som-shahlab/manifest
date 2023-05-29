@@ -6,20 +6,6 @@ strict_optional = false
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
 module = [
-<<<<<<< HEAD
-  "deepspeed",
-  "numpy",
-  "diffusers",
-  "sentence_transformers",
-  "sqlitedict",
-  "dill",
-  "accelerate",
-  "accelerate.utils.modeling",
-  "transformers",
-  "flask",
-  "torch",
-  "pyChatGPT",
-=======
   "accelerate",
   "accelerate.utils.modeling",
   "deepspeed",
@@ -35,7 +21,6 @@ module = [
   "sentence_transformers",
   "sqlalchemy",
   "sqlitedict",
->>>>>>> upstream/main
 ]
 
 [tool.isort]

@@ -41,11 +41,7 @@ class OpenAIEmbeddingClient(OpenAIClient):
             connection_str: connection string.
             client_args: client arguments.
         """
-<<<<<<< HEAD
-        self.api_key = os.environ.get("OPENAI_API_KEY", connection_str)
-=======
         self.api_key = connection_str or os.environ.get("OPENAI_API_KEY")
->>>>>>> upstream/main
         if self.api_key is None:
             raise ValueError(
                 "OpenAI API key not set. Set OPENAI_API_KEY environment "
@@ -80,9 +76,6 @@ class OpenAIEmbeddingClient(OpenAIClient):
         """
         return {"model_name": self.NAME, "engine": getattr(self, "engine")}
 
-<<<<<<< HEAD
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-=======
     def supports_streaming_inference(self) -> bool:
         """Return whether the client supports streaming inference.
 
@@ -91,7 +84,6 @@ class OpenAIEmbeddingClient(OpenAIClient):
         return False
 
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
->>>>>>> upstream/main
         """
         Format response to dict.
 
@@ -172,34 +164,20 @@ class OpenAIEmbeddingClient(OpenAIClient):
         return response_dict
 
     async def _arun_completion(
-<<<<<<< HEAD
-        self, request_params: Dict[str, Any], retry_timeout: int, batch_size: int
-=======
         self, request_params: Dict[str, Any], retry_timeout: int
->>>>>>> upstream/main
     ) -> Dict:
         """Async execute completion request.
 
         Args:
             request_params: request params.
             retry_timeout: retry timeout.
-<<<<<<< HEAD
-            batch_size: batch size for requests.
-=======
->>>>>>> upstream/main
 
         Returns:
             response as dict.
         """
         # Format for embedding model
         request_params = self._format_request_for_embedding(request_params)
-<<<<<<< HEAD
-        response_dict = await super()._arun_completion(
-            request_params, retry_timeout, batch_size
-        )
-=======
         response_dict = await super()._arun_completion(request_params, retry_timeout)
->>>>>>> upstream/main
         # Reformat for text model
         response_dict = self._format_request_from_embedding(response_dict)
         return response_dict

@@ -44,11 +44,7 @@ class CohereClient(Client):
             connection_str: connection string.
             client_args: client arguments.
         """
-<<<<<<< HEAD
-        self.api_key = os.environ.get("COHERE_API_KEY", connection_str)
-=======
         self.api_key = connection_str or os.environ.get("COHERE_API_KEY")
->>>>>>> upstream/main
         if self.api_key is None:
             raise ValueError(
                 "Cohere API key not set. Set COHERE_API_KEY environment "
@@ -85,8 +81,6 @@ class CohereClient(Client):
         """Return whether the client supports batch inference."""
         return False
 
-<<<<<<< HEAD
-=======
     def supports_streaming_inference(self) -> bool:
         """Return whether the client supports streaming inference.
 
@@ -94,7 +88,6 @@ class CohereClient(Client):
         """
         return False
 
->>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -107,11 +100,7 @@ class CohereClient(Client):
         """
         return {"model_name": self.NAME, "engine": getattr(self, "engine")}
 
-<<<<<<< HEAD
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-=======
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
->>>>>>> upstream/main
         """
         Format response to dict.
 

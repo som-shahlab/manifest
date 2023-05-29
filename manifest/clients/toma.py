@@ -111,8 +111,6 @@ class TOMAClient(Client):
         """Return whether the client supports batch inference."""
         return False
 
-<<<<<<< HEAD
-=======
     def supports_streaming_inference(self) -> bool:
         """Return whether the client supports streaming inference.
 
@@ -120,7 +118,6 @@ class TOMAClient(Client):
         """
         return False
 
->>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -153,11 +150,7 @@ class TOMAClient(Client):
             }
         return heartbeats
 
-<<<<<<< HEAD
-    def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
-=======
     def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
->>>>>>> upstream/main
         """
         Format response to dict.
 

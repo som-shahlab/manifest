@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-0.1.1 - Unreleased
-=======
 0.1.9 - Unreleased
 ---------------------
 
@@ -49,7 +46,6 @@ Fixed
 * Refactor Response to use Pydantic types for Request and Response
 
 0.1.1
->>>>>>> upstream/main
 ---------------------
 Added
 ^^^^^

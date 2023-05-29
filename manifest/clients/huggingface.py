@@ -5,13 +5,8 @@ from typing import Any, Dict, Optional
 import requests
 
 from manifest.clients.client import Client
-<<<<<<< HEAD
-from manifest.request import DEFAULT_REQUEST_KEYS, LMRequest, Request
-from manifest.response import Response
-=======
 from manifest.request import DEFAULT_REQUEST_KEYS, LMRequest, LMScoreRequest
 from manifest.response import LMModelChoice, ModelChoices, Response
->>>>>>> upstream/main
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +66,6 @@ class HuggingFaceClient(Client):
         """Return whether the client supports batch inference."""
         return True
 
-<<<<<<< HEAD
-=======
     def supports_streaming_inference(self) -> bool:
         """Return whether the client supports streaming inference.
 
@@ -80,7 +73,6 @@ class HuggingFaceClient(Client):
         """
         return False
 
->>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -95,15 +87,9 @@ class HuggingFaceClient(Client):
         res["client_name"] = self.NAME
         return res
 
-<<<<<<< HEAD
-    def get_score_prompt_request(
-        self,
-        request: Request,
-=======
     def run_score_prompt_request(
         self,
         request: LMScoreRequest,
->>>>>>> upstream/main
     ) -> Response:
         """
         Get the logit score of the prompt via a forward pass of the model.
@@ -115,11 +101,7 @@ class HuggingFaceClient(Client):
             request function that takes no input.
             request parameters as dict.
         """
-<<<<<<< HEAD
-        request_params = self.get_request_params(request)
-=======
         request_params = self._get_request_params(request)
->>>>>>> upstream/main
         retry_timeout = request_params.pop("client_timeout")
         for key in DEFAULT_REQUEST_KEYS:
             request_params.pop(key, None)
@@ -141,9 +123,6 @@ class HuggingFaceClient(Client):
             logger.error(res.text)
             raise e
         response_dict = res.json()
-<<<<<<< HEAD
-        return Response(response_dict, cached=False, request_params=request_params)
-=======
         return Response(
             response=ModelChoices(
                 choices=[LMModelChoice(**choice) for choice in response_dict["choices"]]
@@ -154,4 +133,3 @@ class HuggingFaceClient(Client):
             response_type="text",
             request_type=LMScoreRequest,
         )
->>>>>>> upstream/main

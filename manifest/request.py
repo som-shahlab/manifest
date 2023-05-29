@@ -3,14 +3,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 
-<<<<<<< HEAD
-NOT_CACHE_KEYS = {"client_timeout", "batch_size"}
-DEFAULT_REQUEST_KEYS = {
-    "client_timeout": ("client_timeout", 60),  # seconds
-    "batch_size": ("batch_size", 1),
-    "run_id": ("run_id", None),
-    "request_type": ("request_type", None),
-=======
 # Used when unioning requests after async connection pool
 ENGINE_SEP = "::"
 NOT_CACHE_KEYS = {"client_timeout", "batch_size"}
@@ -19,7 +11,6 @@ DEFAULT_REQUEST_KEYS = {
     "client_timeout": ("client_timeout", 60),  # seconds
     "batch_size": ("batch_size", 8),
     "run_id": ("run_id", None),
->>>>>>> upstream/main
 }
 
 
@@ -36,11 +27,7 @@ class Request(BaseModel):
     n: int = 1
 
     # Timeout
-<<<<<<< HEAD
-    client_timeout: int = 120
-=======
     client_timeout: int = 60
->>>>>>> upstream/main
 
     # Run id used to repeat run with same parameters
     run_id: Optional[str] = None
@@ -48,24 +35,15 @@ class Request(BaseModel):
     # Batch size for async batch run
     batch_size: int = 8
 
-<<<<<<< HEAD
-    # Request type None is for completion. Used to scoring prompt
-    request_type: str = None
-
-=======
->>>>>>> upstream/main
     def to_dict(
         self, allowable_keys: Dict[str, Tuple[str, Any]] = None, add_prompt: bool = True
     ) -> Dict[str, Any]:
         """
         Convert request to a dictionary.
 
-<<<<<<< HEAD
-=======
         Handles parameter renaming but does not fill in default values.
         It will drop any None values.
 
->>>>>>> upstream/main
         Add prompt ensures the prompt is always in the output dictionary.
         """
         if allowable_keys:
@@ -98,12 +76,9 @@ class LMRequest(Request):
     # Top k sampling taking top_k highest probability tokens
     top_k: int = 50
 
-<<<<<<< HEAD
-=======
     # Logprobs return value
     logprobs: Optional[int] = None
 
->>>>>>> upstream/main
     # Stop sequences
     stop_sequences: Optional[List[str]] = None
 
@@ -126,8 +101,6 @@ class LMRequest(Request):
     frequency_penalty: float = 0
 
 
-<<<<<<< HEAD
-=======
 class LMChatRequest(LMRequest):
     """Language Model Chat Request object."""
 
@@ -140,7 +113,6 @@ class LMScoreRequest(LMRequest):
     pass
 
 
->>>>>>> upstream/main
 class EmbeddingRequest(Request):
     """Embedding Request object."""
 
@@ -150,12 +122,6 @@ class EmbeddingRequest(Request):
 class DiffusionRequest(Request):
     """Diffusion Model Request object."""
 
-<<<<<<< HEAD
-    # Request type
-    request_type: str = "diffusion"
-
-=======
->>>>>>> upstream/main
     # Number of steps
     num_inference_steps: int = 50
 
