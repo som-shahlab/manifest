@@ -3,8 +3,13 @@ import logging
 from typing import Any, Dict, Optional
 
 from manifest.clients.client import Client
+<<<<<<< HEAD
 from manifest.request import LMRequest, Request
 from manifest.response import Response
+=======
+from manifest.request import LMChatRequest, LMRequest, LMScoreRequest, Request
+from manifest.response import LMModelChoice, ModelChoices, Response, Usage, Usages
+>>>>>>> upstream/main
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +53,16 @@ class DummyClient(Client):
         """Return whether the client supports batch inference."""
         return True
 
+<<<<<<< HEAD
+=======
+    def supports_streaming_inference(self) -> bool:
+        """Return whether the client supports streaming inference.
+
+        Override in child client class.
+        """
+        return False
+
+>>>>>>> upstream/main
     def get_generation_header(self) -> Dict[str, str]:
         """
         Get generation header.
@@ -86,6 +101,7 @@ class DummyClient(Client):
             num_results = 1
         request_params = request.to_dict(self.PARAMS)
 
+<<<<<<< HEAD
         response_dict = {
             "choices": [{"text": "hello"}]
             * int(request_params["num_results"])
@@ -97,6 +113,36 @@ class DummyClient(Client):
         return Response(response_dict, False, request_params)
 
     async def arun_batch_request(self, request: Request) -> Response:
+=======
+        return Response(
+            response=ModelChoices(
+                choices=[LMModelChoice(text="hello")]  # type: ignore
+                * int(request_params["num_results"])
+                * num_results
+            ),
+            cached=False,
+            request=request,
+            usages=Usages(
+                usages=[
+                    Usage(
+                        **{
+                            "prompt_tokens": 1,
+                            "completion_tokens": 1,
+                            "total_tokens": 2,
+                        }
+                    )
+                ]
+                * int(request_params["num_results"])
+                * num_results
+            ),
+            response_type="text",
+            request_type=self.REQUEST_CLS,
+        )
+
+    async def arun_batch_request(
+        self, request: Request, verbose: bool = False
+    ) -> Response:
+>>>>>>> upstream/main
         """
         Get async request string function.
 
@@ -108,9 +154,61 @@ class DummyClient(Client):
         """
         return self.run_request(request)
 
+<<<<<<< HEAD
     def get_score_prompt_request(
         self,
         request: Request,
+=======
+    def run_chat_request(
+        self,
+        request: LMChatRequest,
+    ) -> Response:
+        """
+        Get the response from chat model.
+
+        Args:
+            request: request.
+
+        Returns:
+            response.
+        """
+        num_results = 1
+        response_dict = {
+            "choices": [
+                {
+                    "text": request.prompt[0]["content"],
+                }
+                for i in range(num_results)
+            ]
+        }
+        return Response(
+            response=ModelChoices(
+                choices=[
+                    LMModelChoice(**choice)  # type: ignore
+                    for choice in response_dict["choices"]
+                ]
+            ),
+            cached=False,
+            request=request,
+            usages=Usages(
+                usages=[
+                    Usage(
+                        **{
+                            "prompt_tokens": 1,
+                            "completion_tokens": 1,
+                            "total_tokens": 2,
+                        }
+                    )
+                ]
+            ),
+            response_type="text",
+            request_type=LMChatRequest,
+        )
+
+    def run_score_prompt_request(
+        self,
+        request: LMScoreRequest,
+>>>>>>> upstream/main
     ) -> Response:
         """
         Get the logit score of the prompt via a forward pass of the model.
@@ -126,17 +224,40 @@ class DummyClient(Client):
             num_results = len(request.prompt)
         else:
             num_results = 1
+<<<<<<< HEAD
         request_params = {"prompt": request.prompt}
 
+=======
+>>>>>>> upstream/main
         response_dict = {
             "choices": [
                 {
                     "text": request.prompt
                     if isinstance(request.prompt, str)
                     else request.prompt[i],
+<<<<<<< HEAD
                     "logprob": 0.3,
+=======
+                    "token_logprobs": [0.3],
+>>>>>>> upstream/main
                 }
                 for i in range(num_results)
             ]
         }
+<<<<<<< HEAD
         return Response(response_dict, False, request_params)
+=======
+        return Response(
+            response=ModelChoices(
+                choices=[
+                    LMModelChoice(**choice)  # type: ignore
+                    for choice in response_dict["choices"]
+                ]
+            ),
+            cached=False,
+            request=request,
+            usages=None,
+            response_type="text",
+            request_type=LMScoreRequest,
+        )
+>>>>>>> upstream/main

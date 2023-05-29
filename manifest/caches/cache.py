@@ -1,5 +1,6 @@
 """Cache for queries and responses."""
 from abc import ABC, abstractmethod
+<<<<<<< HEAD
 from typing import Any, Dict, Union
 
 from manifest.caches.serializers import ArraySerializer, NumpyByteSerializer, Serializer
@@ -12,6 +13,16 @@ ARRAY_CACHE_TYPES = {
     "openaiembedding",
     "huggingfaceembedding",
 }
+=======
+from typing import Any, Dict, Type, Union
+
+from manifest.caches.serializers import ArraySerializer, NumpyByteSerializer, Serializer
+from manifest.request import DiffusionRequest, EmbeddingRequest, LMRequest, Request
+from manifest.response import Response
+
+# Non-text return type caches
+ARRAY_CACHE_TYPES = {EmbeddingRequest, DiffusionRequest}
+>>>>>>> upstream/main
 
 
 class Cache(ABC):
@@ -20,7 +31,11 @@ class Cache(ABC):
     def __init__(
         self,
         connection_str: str,
+<<<<<<< HEAD
         client_name: str = "None",
+=======
+        request_type: Type[Request] = LMRequest,
+>>>>>>> upstream/main
         cache_args: Dict[str, Any] = {},
     ):
         """
@@ -28,7 +43,11 @@ class Cache(ABC):
 
         Args:
             connection_str: connection string.
+<<<<<<< HEAD
             client_name: name of client.
+=======
+            request_type: request type.
+>>>>>>> upstream/main
             cache_args: arguments for cache.
 
         cache_args are any arguments needed to initialize the cache.
@@ -41,12 +60,21 @@ class Cache(ABC):
         the entire byte string. `byte_string` is default.
 
         Args:
+<<<<<<< HEAD
             connection_str: connection string for client.
             cache_args: cache arguments.
         """
         self.client_name = client_name
         self.connect(connection_str, cache_args)
         if self.client_name in ARRAY_CACHE_TYPES:
+=======
+            connection_str: connection string for cache.
+            cache_args: cache arguments.
+        """
+        self.request_type = request_type
+        self.connect(connection_str, cache_args)
+        if self.request_type in ARRAY_CACHE_TYPES:
+>>>>>>> upstream/main
             array_serializer = cache_args.pop("array_serializer", "byte_string")
             if array_serializer not in ["local_file", "byte_string"]:
                 raise ValueError(
@@ -65,13 +93,21 @@ class Cache(ABC):
 
     @abstractmethod
     def close(self) -> None:
+<<<<<<< HEAD
         """Close the client."""
+=======
+        """Close the cache."""
+>>>>>>> upstream/main
         raise NotImplementedError()
 
     @abstractmethod
     def connect(self, connection_str: str, cache_args: Dict[str, Any]) -> None:
         """
+<<<<<<< HEAD
         Connect to client.
+=======
+        Connect to cache.
+>>>>>>> upstream/main
 
         Args:
             connection_str: connection string.
@@ -123,6 +159,7 @@ class Cache(ABC):
         key = self.serializer.request_to_key(request)
         cached_response = self.get_key(key)
         if cached_response:
+<<<<<<< HEAD
             cached = True
             response = self.serializer.key_to_response(cached_response)
             return Response(
@@ -131,6 +168,11 @@ class Cache(ABC):
                 request,
                 **RESPONSE_CONSTRUCTORS.get(self.client_name, {}),
             )
+=======
+            response = self.serializer.key_to_response(cached_response)
+            response["cached"] = True
+            return Response.from_dict(response, request_dict=request)
+>>>>>>> upstream/main
         return None
 
     def set(self, request: Dict, response: Dict) -> None:

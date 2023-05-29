@@ -1,7 +1,11 @@
 """Manifest test."""
 import asyncio
 import os
+<<<<<<< HEAD
 from typing import cast
+=======
+from typing import Iterator, cast
+>>>>>>> upstream/main
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -13,6 +17,10 @@ from manifest import Manifest, Response
 from manifest.caches.noop import NoopCache
 from manifest.caches.sqlite import SQLiteCache
 from manifest.clients.dummy import DummyClient
+<<<<<<< HEAD
+=======
+from manifest.connections.client_pool import ClientConnection
+>>>>>>> upstream/main
 
 URL = "http://localhost:6000"
 try:
@@ -41,10 +49,18 @@ def test_init(sqlite_cache: str) -> None:
         cache_name="sqlite",
         cache_connection=sqlite_cache,
     )
+<<<<<<< HEAD
     assert manifest.client_name == "dummy"
     assert isinstance(manifest.client, DummyClient)
     assert isinstance(manifest.cache, SQLiteCache)
     assert manifest.client.n == 1  # type: ignore
+=======
+    assert len(manifest.client_pool.client_pool) == 1
+    client = manifest.client_pool.get_next_client()
+    assert isinstance(client, DummyClient)
+    assert isinstance(manifest.cache, SQLiteCache)
+    assert client.n == 1  # type: ignore
+>>>>>>> upstream/main
     assert manifest.stop_token == ""
 
     manifest = Manifest(
@@ -53,6 +69,7 @@ def test_init(sqlite_cache: str) -> None:
         n=3,
         stop_token="\n",
     )
+<<<<<<< HEAD
     assert manifest.client_name == "dummy"
     assert isinstance(manifest.client, DummyClient)
     assert isinstance(manifest.cache, NoopCache)
@@ -81,6 +98,13 @@ def test_change_manifest(sqlite_cache: str) -> None:
     assert isinstance(manifest.client, DummyClient)
     assert isinstance(manifest.cache, SQLiteCache)
     assert manifest.client.n == 1  # type: ignore
+=======
+    assert len(manifest.client_pool.client_pool) == 1
+    client = manifest.client_pool.get_next_client()
+    assert isinstance(client, DummyClient)
+    assert isinstance(manifest.cache, NoopCache)
+    assert client.n == 3  # type: ignore
+>>>>>>> upstream/main
     assert manifest.stop_token == "\n"
 
 
@@ -102,7 +126,11 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
     assert str(exc_info.value) == "[('bad_input', 5)] arguments are not recognized."
 
     # Allow params in the request object but not in the client to go through
+<<<<<<< HEAD
     assert "top_k" not in manifest.client.PARAMS
+=======
+    assert "top_k" not in manifest.client_pool.get_next_client().PARAMS
+>>>>>>> upstream/main
     result = manifest.run(prompt, return_response=return_response, top_k=5)
     assert result is not None
 
@@ -111,8 +139,13 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
     if return_response:
         assert isinstance(result, Response)
         result = cast(Response, result)
+<<<<<<< HEAD
         assert len(result.get_json_response()["usage"]) == len(
             result.get_json_response()["choices"]
+=======
+        assert len(result.get_usage_obj().usages) == len(
+            result.get_response_obj().choices
+>>>>>>> upstream/main
         )
         res = result.get_response(manifest.stop_token)
     else:
@@ -122,6 +155,10 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
             {
                 "prompt": "This is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": n,
             },
         )
@@ -137,8 +174,13 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
     if return_response:
         assert isinstance(result, Response)
         result = cast(Response, result)
+<<<<<<< HEAD
         assert len(result.get_json_response()["usage"]) == len(
             result.get_json_response()["choices"]
+=======
+        assert len(result.get_usage_obj().usages) == len(
+            result.get_response_obj().choices
+>>>>>>> upstream/main
         )
         res = result.get_response(manifest.stop_token)
     else:
@@ -148,6 +190,10 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
             {
                 "prompt": "This is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": n,
                 "run_id": "34",
             }
@@ -164,8 +210,13 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
     if return_response:
         assert isinstance(result, Response)
         result = cast(Response, result)
+<<<<<<< HEAD
         assert len(result.get_json_response()["usage"]) == len(
             result.get_json_response()["choices"]
+=======
+        assert len(result.get_usage_obj().usages) == len(
+            result.get_response_obj().choices
+>>>>>>> upstream/main
         )
         res = result.get_response(manifest.stop_token)
     else:
@@ -175,6 +226,10 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
             {
                 "prompt": "Hello is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": n,
             },
         )
@@ -190,8 +245,13 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
     if return_response:
         assert isinstance(result, Response)
         result = cast(Response, result)
+<<<<<<< HEAD
         assert len(result.get_json_response()["usage"]) == len(
             result.get_json_response()["choices"]
+=======
+        assert len(result.get_usage_obj().usages) == len(
+            result.get_response_obj().choices
+>>>>>>> upstream/main
         )
         res = result.get_response(stop_token="ll")
     else:
@@ -201,6 +261,10 @@ def test_run(sqlite_cache: str, n: int, return_response: bool) -> None:
             {
                 "prompt": "Hello is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": n,
             },
         )
@@ -233,8 +297,13 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
         if return_response:
             assert isinstance(result, Response)
             result = cast(Response, result)
+<<<<<<< HEAD
             assert len(result.get_json_response()["usage"]) == len(
                 result.get_json_response()["choices"]
+=======
+            assert len(result.get_usage_obj().usages) == len(
+                result.get_response_obj().choices
+>>>>>>> upstream/main
             )
             res = result.get_response(manifest.stop_token, is_batch=True)
         else:
@@ -245,6 +314,10 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
                 {
                     "prompt": "This is a prompt",
                     "engine": "dummy",
+<<<<<<< HEAD
+=======
+                    "request_cls": "LMRequest",
+>>>>>>> upstream/main
                     "num_results": n,
                 },
             )
@@ -256,8 +329,13 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
         if return_response:
             assert isinstance(result, Response)
             result = cast(Response, result)
+<<<<<<< HEAD
             assert len(result.get_json_response()["usage"]) == len(
                 result.get_json_response()["choices"]
+=======
+            assert len(result.get_usage_obj().usages) == len(
+                result.get_response_obj().choices
+>>>>>>> upstream/main
             )
             res = result.get_response(manifest.stop_token, is_batch=True)
         else:
@@ -268,6 +346,10 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
                 {
                     "prompt": "Hello is a prompt",
                     "engine": "dummy",
+<<<<<<< HEAD
+=======
+                    "request_cls": "LMRequest",
+>>>>>>> upstream/main
                     "num_results": n,
                 },
             )
@@ -283,6 +365,10 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
                 {
                     "prompt": "New prompt",
                     "engine": "dummy",
+<<<<<<< HEAD
+=======
+                    "request_cls": "LMRequest",
+>>>>>>> upstream/main
                     "num_results": n,
                 },
             )
@@ -293,8 +379,13 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
         if return_response:
             assert isinstance(result, Response)
             result = cast(Response, result)
+<<<<<<< HEAD
             assert len(result.get_json_response()["usage"]) == len(
                 result.get_json_response()["choices"]
+=======
+            assert len(result.get_usage_obj().usages) == len(
+                result.get_response_obj().choices
+>>>>>>> upstream/main
             )
             res = result.get_response(manifest.stop_token, is_batch=True)
             # Cached because one item is in cache
@@ -308,8 +399,13 @@ def test_batch_run(sqlite_cache: str, n: int, return_response: bool) -> None:
         if return_response:
             assert isinstance(result, Response)
             result = cast(Response, result)
+<<<<<<< HEAD
             assert len(result.get_json_response()["usage"]) == len(
                 result.get_json_response()["choices"]
+=======
+            assert len(result.get_usage_obj().usages) == len(
+                result.get_response_obj().choices
+>>>>>>> upstream/main
             )
             res = result.get_response(stop_token="ll", is_batch=True)
         else:
@@ -330,9 +426,13 @@ def test_abatch_run(sqlite_cache: str) -> None:
         Response, asyncio.run(manifest.arun_batch(prompt, return_response=True))
     )
 
+<<<<<<< HEAD
     assert len(result.get_json_response()["usage"]) == len(
         result.get_json_response()["choices"]
     )
+=======
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+>>>>>>> upstream/main
     res = result.get_response(manifest.stop_token, is_batch=True)
     assert res == ["hello"]
     assert (
@@ -340,6 +440,10 @@ def test_abatch_run(sqlite_cache: str) -> None:
             {
                 "prompt": "This is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": 1,
             },
         )
@@ -351,9 +455,13 @@ def test_abatch_run(sqlite_cache: str) -> None:
         Response, asyncio.run(manifest.arun_batch(prompt, return_response=True))
     )
 
+<<<<<<< HEAD
     assert len(result.get_json_response()["usage"]) == len(
         result.get_json_response()["choices"]
     )
+=======
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+>>>>>>> upstream/main
     res = result.get_response(manifest.stop_token, is_batch=True)
     assert res == ["hello", "hello"]
     assert (
@@ -361,6 +469,10 @@ def test_abatch_run(sqlite_cache: str) -> None:
             {
                 "prompt": "Hello is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": 1,
             },
         )
@@ -371,9 +483,13 @@ def test_abatch_run(sqlite_cache: str) -> None:
         Response, asyncio.run(manifest.arun_batch(prompt, return_response=True))
     )
 
+<<<<<<< HEAD
     assert len(result.get_json_response()["usage"]) == len(
         result.get_json_response()["choices"]
     )
+=======
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+>>>>>>> upstream/main
     res = result.get_response(manifest.stop_token, is_batch=True)
     assert result.is_cached()
 
@@ -382,6 +498,10 @@ def test_abatch_run(sqlite_cache: str) -> None:
             {
                 "prompt": "New prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
+=======
+                "request_cls": "LMRequest",
+>>>>>>> upstream/main
                 "num_results": 1,
             },
         )
@@ -392,9 +512,13 @@ def test_abatch_run(sqlite_cache: str) -> None:
         Response, asyncio.run(manifest.arun_batch(prompt, return_response=True))
     )
 
+<<<<<<< HEAD
     assert len(result.get_json_response()["usage"]) == len(
         result.get_json_response()["choices"]
     )
+=======
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+>>>>>>> upstream/main
     res = result.get_response(manifest.stop_token, is_batch=True)
     # Cached because one item is in cache
     assert result.is_cached()
@@ -405,14 +529,75 @@ def test_abatch_run(sqlite_cache: str) -> None:
         Response, asyncio.run(manifest.arun_batch(prompt, return_response=True))
     )
 
+<<<<<<< HEAD
     assert len(result.get_json_response()["usage"]) == len(
         result.get_json_response()["choices"]
     )
+=======
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+>>>>>>> upstream/main
     res = result.get_response(stop_token="ll", is_batch=True)
     assert res == ["he", "he"]
 
 
 @pytest.mark.usefixtures("sqlite_cache")
+<<<<<<< HEAD
+=======
+def test_run_chat(sqlite_cache: str) -> None:
+    """Test manifest run."""
+    manifest = Manifest(
+        client_name="dummy",
+        cache_name="sqlite",
+        cache_connection=sqlite_cache,
+    )
+    # Set CHAT to be true for this model
+    manifest.client_pool.client_pool[0].IS_CHAT = True
+
+    prompt = [
+        {"role": "system", "content": "Hello."},
+    ]
+    result = manifest.run(prompt, return_response=False)
+    assert result == "Hello."
+    assert (
+        manifest.cache.get(
+            {
+                "prompt": [{"content": "Hello.", "role": "system"}],
+                "engine": "dummy",
+                "num_results": 1,
+                "request_cls": "LMChatRequest",
+            },
+        )
+        is not None
+    )
+
+    prompt = [
+        {"role": "system", "content": "Hello."},
+        {"role": "user", "content": "Goodbye?"},
+    ]
+    result = manifest.run(prompt, return_response=True)
+    assert isinstance(result, Response)
+    result = cast(Response, result)
+    assert len(result.get_usage_obj().usages) == len(result.get_response_obj().choices)
+    res = result.get_response()
+    assert res == "Hello."
+    assert (
+        manifest.cache.get(
+            {
+                "prompt": [
+                    {"role": "system", "content": "Hello."},
+                    {"role": "user", "content": "Goodbye?"},
+                ],
+                "engine": "dummy",
+                "num_results": 1,
+                "request_cls": "LMChatRequest",
+            },
+        )
+        is not None
+    )
+
+
+@pytest.mark.usefixtures("sqlite_cache")
+>>>>>>> upstream/main
 def test_score_run(sqlite_cache: str) -> None:
     """Test manifest run."""
     manifest = Manifest(
@@ -428,13 +613,19 @@ def test_score_run(sqlite_cache: str) -> None:
             {
                 "prompt": "This is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
                 "num_results": 1,
                 "request_type": "score_prompt",
+=======
+                "request_cls": "LMScoreRequest",
+                "num_results": 1,
+>>>>>>> upstream/main
             },
         )
         is not None
     )
     assert result == {
+<<<<<<< HEAD
         "generation_key": "choices",
         "logits_key": "token_logprobs",
         "item_key": "text",
@@ -447,6 +638,38 @@ def test_score_run(sqlite_cache: str) -> None:
             "num_results": 1,
             "request_type": "score_prompt",
         },
+=======
+        "response": {
+            "choices": [
+                {"text": "This is a prompt", "token_logprobs": [0.3], "tokens": None}
+            ]
+        },
+        "usages": {"usages": []},
+        "cached": False,
+        "request": {
+            "prompt": "This is a prompt",
+            "engine": "text-ada-001",
+            "n": 1,
+            "client_timeout": 60,
+            "run_id": None,
+            "batch_size": 8,
+            "temperature": 0.7,
+            "max_tokens": 100,
+            "top_p": 1.0,
+            "top_k": 50,
+            "logprobs": None,
+            "stop_sequences": None,
+            "num_beams": 1,
+            "do_sample": False,
+            "repetition_penalty": 1.0,
+            "length_penalty": 1.0,
+            "presence_penalty": 0.0,
+            "frequency_penalty": 0.0,
+        },
+        "response_type": "text",
+        "request_type": "LMScoreRequest",
+        "item_dtype": None,
+>>>>>>> upstream/main
     }
 
     prompt_list = ["Hello is a prompt", "Hello is another prompt"]
@@ -456,8 +679,13 @@ def test_score_run(sqlite_cache: str) -> None:
             {
                 "prompt": "Hello is a prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
                 "num_results": 1,
                 "request_type": "score_prompt",
+=======
+                "request_cls": "LMScoreRequest",
+                "num_results": 1,
+>>>>>>> upstream/main
             },
         )
         is not None
@@ -467,13 +695,19 @@ def test_score_run(sqlite_cache: str) -> None:
             {
                 "prompt": "Hello is another prompt",
                 "engine": "dummy",
+<<<<<<< HEAD
                 "num_results": 1,
                 "request_type": "score_prompt",
+=======
+                "request_cls": "LMScoreRequest",
+                "num_results": 1,
+>>>>>>> upstream/main
             },
         )
         is not None
     )
     assert result == {
+<<<<<<< HEAD
         "generation_key": "choices",
         "logits_key": "token_logprobs",
         "item_key": "text",
@@ -491,6 +725,43 @@ def test_score_run(sqlite_cache: str) -> None:
             "num_results": 1,
             "request_type": "score_prompt",
         },
+=======
+        "response": {
+            "choices": [
+                {"text": "Hello is a prompt", "token_logprobs": [0.3], "tokens": None},
+                {
+                    "text": "Hello is another prompt",
+                    "token_logprobs": [0.3],
+                    "tokens": None,
+                },
+            ]
+        },
+        "usages": {"usages": []},
+        "cached": False,
+        "request": {
+            "prompt": ["Hello is a prompt", "Hello is another prompt"],
+            "engine": "text-ada-001",
+            "n": 1,
+            "client_timeout": 60,
+            "run_id": None,
+            "batch_size": 8,
+            "temperature": 0.7,
+            "max_tokens": 100,
+            "top_p": 1.0,
+            "top_k": 50,
+            "logprobs": None,
+            "stop_sequences": None,
+            "num_beams": 1,
+            "do_sample": False,
+            "repetition_penalty": 1.0,
+            "length_penalty": 1.0,
+            "presence_penalty": 0.0,
+            "frequency_penalty": 0.0,
+        },
+        "response_type": "text",
+        "request_type": "LMScoreRequest",
+        "item_dtype": None,
+>>>>>>> upstream/main
     }
 
 
@@ -665,8 +936,13 @@ def test_openai(sqlite_cache: str) -> None:
     assert isinstance(response.get_response(), str) and len(response.get_response()) > 0
     assert response.get_response() == res
     assert response.is_cached() is True
+<<<<<<< HEAD
     assert "usage" in response.get_json_response()
     assert response.get_json_response()["usage"][0]["total_tokens"] == 15
+=======
+    assert response.get_usage_obj().usages
+    assert response.get_usage_obj().usages[0].total_tokens == 15
+>>>>>>> upstream/main
 
     response = cast(Response, client.run("Why are there apples?", return_response=True))
     assert response.is_cached() is True
@@ -683,12 +959,18 @@ def test_openai(sqlite_cache: str) -> None:
     assert (
         isinstance(response.get_response(), list) and len(response.get_response()) == 2
     )
+<<<<<<< HEAD
     assert (
         "usage" in response.get_json_response()
         and len(response.get_json_response()["usage"]) == 2
     )
     assert response.get_json_response()["usage"][0]["total_tokens"] == 15
     assert response.get_json_response()["usage"][1]["total_tokens"] == 16
+=======
+    assert response.get_usage_obj().usages and len(response.get_usage_obj().usages) == 2
+    assert response.get_usage_obj().usages[0].total_tokens == 15
+    assert response.get_usage_obj().usages[1].total_tokens == 16
+>>>>>>> upstream/main
 
     response = cast(
         Response, client.run("Why are there bananas?", return_response=True)
@@ -712,18 +994,66 @@ def test_openai(sqlite_cache: str) -> None:
     assert (
         isinstance(response.get_response(), list) and len(response.get_response()) == 2
     )
+<<<<<<< HEAD
     assert (
         "usage" in response.get_json_response()
         and len(response.get_json_response()["usage"]) == 2
     )
     assert response.get_json_response()["usage"][0]["total_tokens"] == 17
     assert response.get_json_response()["usage"][1]["total_tokens"] == 15
+=======
+    assert response.get_usage_obj().usages and len(response.get_usage_obj().usages) == 2
+    assert response.get_usage_obj().usages[0].total_tokens == 17
+    assert response.get_usage_obj().usages[1].total_tokens == 15
+>>>>>>> upstream/main
 
     response = cast(
         Response, client.run("Why are there oranges?", return_response=True)
     )
     assert response.is_cached() is True
 
+<<<<<<< HEAD
+=======
+    # Test streaming
+    num_responses = 0
+    streaming_response_text = cast(
+        Iterator[str], client.run("Why are there oranges?", stream=True)
+    )
+    for res_text in streaming_response_text:
+        num_responses += 1
+        assert isinstance(res_text, str) and len(res_text) > 0
+    assert num_responses == 8
+
+    streaming_response = cast(
+        Iterator[Response],
+        client.run("Why are there mandarines?", return_response=True, stream=True),
+    )
+    num_responses = 0
+    merged_res = []
+    for res in streaming_response:
+        num_responses += 1
+        assert isinstance(res, Response) and len(res.get_response()) > 0
+        merged_res.append(cast(str, res.get_response()))
+        assert not res.is_cached()
+    assert num_responses == 10
+
+    # Make sure cached
+    streaming_response = cast(
+        Iterator[Response],
+        client.run("Why are there mandarines?", return_response=True, stream=True),
+    )
+    num_responses = 0
+    merged_res_cachced = []
+    for res in streaming_response:
+        num_responses += 1
+        assert isinstance(res, Response) and len(res.get_response()) > 0
+        merged_res_cachced.append(cast(str, res.get_response()))
+        assert res.is_cached()
+    # OpenAI stream does not return logprobs, so this is by number of words
+    assert num_responses == 7
+    assert "".join(merged_res) == "".join(merged_res_cachced)
+
+>>>>>>> upstream/main
 
 @pytest.mark.skipif(not OPENAI_ALIVE, reason="No openai key set")
 @pytest.mark.usefixtures("sqlite_cache")
@@ -733,6 +1063,10 @@ def test_openaichat(sqlite_cache: str) -> None:
         client_name="openaichat",
         cache_name="sqlite",
         cache_connection=sqlite_cache,
+<<<<<<< HEAD
+=======
+        temperature=0.0,
+>>>>>>> upstream/main
     )
 
     res = client.run("Why are there apples?")
@@ -742,8 +1076,13 @@ def test_openaichat(sqlite_cache: str) -> None:
     assert isinstance(response.get_response(), str) and len(response.get_response()) > 0
     assert response.get_response() == res
     assert response.is_cached() is True
+<<<<<<< HEAD
     assert "usage" in response.get_json_response()
     assert response.get_json_response()["usage"][0]["total_tokens"] == 23
+=======
+    assert response.get_usage_obj().usages
+    assert response.get_usage_obj().usages[0].total_tokens == 23
+>>>>>>> upstream/main
 
     response = cast(Response, client.run("Why are there apples?", return_response=True))
     assert response.is_cached() is True
@@ -770,18 +1109,92 @@ def test_openaichat(sqlite_cache: str) -> None:
     assert (
         isinstance(response.get_response(), list) and len(response.get_response()) == 2
     )
+<<<<<<< HEAD
     assert (
         "usage" in response.get_json_response()
         and len(response.get_json_response()["usage"]) == 2
     )
     assert response.get_json_response()["usage"][0]["total_tokens"] == 25
     assert response.get_json_response()["usage"][1]["total_tokens"] == 23
+=======
+    assert response.get_usage_obj().usages and len(response.get_usage_obj().usages) == 2
+    assert response.get_usage_obj().usages[0].total_tokens == 25
+    assert response.get_usage_obj().usages[1].total_tokens == 23
+>>>>>>> upstream/main
 
     response = cast(
         Response, client.run("Why are there oranges?", return_response=True)
     )
     assert response.is_cached() is True
 
+<<<<<<< HEAD
+=======
+    chat_dict = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "Who won the world series in 2020?"},
+        {
+            "role": "assistant",
+            "content": "The Los Angeles Dodgers won the World Series in 2020.",
+        },
+        {"role": "user", "content": "Where was it played?"},
+    ]
+    res = client.run(chat_dict)
+    assert isinstance(res, str) and len(res) > 0
+    response = cast(Response, client.run(chat_dict, return_response=True))
+    assert response.is_cached() is True
+    assert response.get_usage_obj().usages[0].total_tokens == 67
+    chat_dict = [
+        {"role": "system", "content": "You are a helpful assistanttttt."},
+        {"role": "user", "content": "Who won the world series in 2020?"},
+        {
+            "role": "assistant",
+            "content": "The Los Angeles Dodgers won the World Series in 2020.",
+        },
+        {"role": "user", "content": "Where was it played?"},
+    ]
+    response = cast(Response, client.run(chat_dict, return_response=True))
+    assert response.is_cached() is False
+
+    # Test streaming
+    num_responses = 0
+    streaming_response_text = cast(
+        Iterator[str], client.run("Why are there oranges?", stream=True)
+    )
+    for res_text in streaming_response_text:
+        num_responses += 1
+        assert isinstance(res_text, str) and len(res_text) > 0
+    assert num_responses == 9
+
+    streaming_response = cast(
+        Iterator[Response],
+        client.run("Why are there mandarines?", return_response=True, stream=True),
+    )
+    num_responses = 0
+    merged_res = []
+    for res in streaming_response:
+        num_responses += 1
+        assert isinstance(res, Response) and len(res.get_response()) > 0
+        merged_res.append(cast(str, res.get_response()))
+        assert not res.is_cached()
+    assert num_responses == 10
+
+    # Make sure cached
+    streaming_response = cast(
+        Iterator[Response],
+        client.run("Why are there mandarines?", return_response=True, stream=True),
+    )
+    num_responses = 0
+    merged_res_cachced = []
+    for res in streaming_response:
+        num_responses += 1
+        assert isinstance(res, Response) and len(res.get_response()) > 0
+        merged_res_cachced.append(cast(str, res.get_response()))
+        assert res.is_cached()
+    # OpenAI stream does not return logprobs, so this is by number of words
+    assert num_responses == 7
+    assert "".join(merged_res) == "".join(merged_res_cachced)
+
+>>>>>>> upstream/main
 
 @pytest.mark.skipif(not OPENAI_ALIVE, reason="No openai key set")
 @pytest.mark.usefixtures("sqlite_cache")
@@ -816,8 +1229,13 @@ def test_openaiembedding(sqlite_cache: str) -> None:
     assert isinstance(response.get_response(), np.ndarray)
     assert np.allclose(response.get_response(), res)
     assert response.is_cached() is True
+<<<<<<< HEAD
     assert "usage" in response.get_json_response()
     assert response.get_json_response()["usage"][0]["total_tokens"] == 5
+=======
+    assert response.get_usage_obj().usages
+    assert response.get_usage_obj().usages[0].total_tokens == 5
+>>>>>>> upstream/main
 
     response = cast(Response, client.run("Why are there apples?", return_response=True))
     assert response.is_cached() is True
@@ -838,12 +1256,18 @@ def test_openaiembedding(sqlite_cache: str) -> None:
     assert (
         isinstance(response.get_response(), list) and len(response.get_response()) == 2
     )
+<<<<<<< HEAD
     assert (
         "usage" in response.get_json_response()
         and len(response.get_json_response()["usage"]) == 2
     )
     assert response.get_json_response()["usage"][0]["total_tokens"] == 5
     assert response.get_json_response()["usage"][1]["total_tokens"] == 6
+=======
+    assert response.get_usage_obj().usages and len(response.get_usage_obj().usages) == 2
+    assert response.get_usage_obj().usages[0].total_tokens == 5
+    assert response.get_usage_obj().usages[1].total_tokens == 6
+>>>>>>> upstream/main
 
     response = cast(
         Response, client.run("Why are there bananas?", return_response=True)
@@ -878,12 +1302,18 @@ def test_openaiembedding(sqlite_cache: str) -> None:
         and len(res_list) == 2
         and isinstance(res_list[0], np.ndarray)
     )
+<<<<<<< HEAD
     assert (
         "usage" in response.get_json_response()
         and len(response.get_json_response()["usage"]) == 2
     )
     assert response.get_json_response()["usage"][0]["total_tokens"] == 7
     assert response.get_json_response()["usage"][1]["total_tokens"] == 5
+=======
+    assert response.get_usage_obj().usages and len(response.get_usage_obj().usages) == 2
+    assert response.get_usage_obj().usages[0].total_tokens == 7
+    assert response.get_usage_obj().usages[1].total_tokens == 5
+>>>>>>> upstream/main
 
     response = cast(
         Response, client.run("Why are there oranges?", return_response=True)
@@ -891,6 +1321,136 @@ def test_openaiembedding(sqlite_cache: str) -> None:
     assert response.is_cached() is True
 
 
+<<<<<<< HEAD
+=======
+@pytest.mark.skipif(not OPENAI_ALIVE, reason="No openai key set")
+@pytest.mark.usefixtures("sqlite_cache")
+def test_openai_pool(sqlite_cache: str) -> None:
+    """Test openai and openaichat client."""
+    client_connection1 = ClientConnection(
+        client_name="openaichat",
+    )
+    client_connection2 = ClientConnection(client_name="openai", engine="text-ada-001")
+    client = Manifest(
+        client_pool=[client_connection1, client_connection2],
+        cache_name="sqlite",
+        client_connection=sqlite_cache,
+    )
+    res = client.run("Why are there apples?")
+    assert isinstance(res, str) and len(res) > 0
+
+    res2 = client.run("Why are there apples?")
+    assert isinstance(res2, str) and len(res2) > 0
+    # Different models
+    assert res != res2
+
+    assert cast(
+        Response, client.run("Why are there apples?", return_response=True)
+    ).is_cached()
+
+    res_list = asyncio.run(
+        client.arun_batch(["Why are there pears?", "Why are there oranges?"])
+    )
+    assert isinstance(res_list, list) and len(res_list) == 2
+    res_list2 = asyncio.run(
+        client.arun_batch(["Why are there pears?", "Why are there oranges?"])
+    )
+    assert isinstance(res_list2, list) and len(res_list2) == 2
+    # Different models
+    assert res_list != res_list2
+
+    assert cast(
+        Response,
+        asyncio.run(
+            client.arun_batch(
+                ["Why are there pears?", "Why are there oranges?"], return_response=True
+            )
+        ),
+    ).is_cached()
+
+    # Test chunk size of 1
+    res_list = asyncio.run(
+        client.arun_batch(
+            ["Why are there pineapples?", "Why are there pinecones?"], chunk_size=1
+        )
+    )
+    assert isinstance(res_list, list) and len(res_list) == 2
+    res_list2 = asyncio.run(
+        client.arun_batch(
+            ["Why are there pineapples?", "Why are there pinecones?"], chunk_size=1
+        )
+    )
+    # Because we split across both models exactly in first run,
+    # we will get the same result
+    assert res_list == res_list2
+
+
+@pytest.mark.skipif(
+    not OPENAI_ALIVE or not MODEL_ALIVE, reason="No openai or local model set"
+)
+@pytest.mark.usefixtures("sqlite_cache")
+def test_mixed_pool(sqlite_cache: str) -> None:
+    """Test openai and openaichat client."""
+    client_connection1 = ClientConnection(
+        client_name="huggingface",
+        client_connection=URL,
+    )
+    client_connection2 = ClientConnection(client_name="openai", engine="text-ada-001")
+    client = Manifest(
+        client_pool=[client_connection1, client_connection2],
+        cache_name="sqlite",
+        client_connection=sqlite_cache,
+    )
+
+    res = client.run("Why are there apples?")
+    assert isinstance(res, str) and len(res) > 0
+
+    res2 = client.run("Why are there apples?")
+    assert isinstance(res2, str) and len(res2) > 0
+    # Different models
+    assert res != res2
+    assert cast(
+        Response, client.run("Why are there apples?", return_response=True)
+    ).is_cached()
+
+    res_list = asyncio.run(
+        client.arun_batch(["Why are there pears?", "Why are there oranges?"])
+    )
+    assert isinstance(res_list, list) and len(res_list) == 2
+    res_list2 = asyncio.run(
+        client.arun_batch(["Why are there pears?", "Why are there oranges?"])
+    )
+    assert isinstance(res_list2, list) and len(res_list2) == 2
+    # Different models
+    assert res_list != res_list2
+
+    assert cast(
+        Response,
+        asyncio.run(
+            client.arun_batch(
+                ["Why are there pears?", "Why are there oranges?"], return_response=True
+            )
+        ),
+    ).is_cached()
+
+    # Test chunk size of 1
+    res_list = asyncio.run(
+        client.arun_batch(
+            ["Why are there pineapples?", "Why are there pinecones?"], chunk_size=1
+        )
+    )
+    assert isinstance(res_list, list) and len(res_list) == 2
+    res_list2 = asyncio.run(
+        client.arun_batch(
+            ["Why are there pineapples?", "Why are there pinecones?"], chunk_size=1
+        )
+    )
+    # Because we split across both models exactly in first run,
+    # we will get the same result
+    assert res_list == res_list2
+
+
+>>>>>>> upstream/main
 def test_retry_handling() -> None:
     """Test retry handling."""
     # We'll mock the response so we won't need a real connection
@@ -949,17 +1509,30 @@ def test_retry_handling() -> None:
     with patch("manifest.clients.client.requests.post", mock_create):
         # Run manifest
         result = client.run(prompts, temperature=0, overwrite_cache=True)
+<<<<<<< HEAD
         assert result == ["WHATTT.", "UH OH.", "HARG"]
+=======
+        assert result == [" WHATTT.", " UH OH.", " HARG"]
+>>>>>>> upstream/main
 
         # Assert that OpenAI client was called twice
         assert mock_create.call_count == 2
 
+<<<<<<< HEAD
     # Now make sure it errors when not a 429
     mock_create = MagicMock(
         side_effect=[
             # raise a 500 error
             HTTPError(
                 response=Mock(status_code=500, json=Mock(return_value={})),
+=======
+    # Now make sure it errors when not a 429 or 500
+    mock_create = MagicMock(
+        side_effect=[
+            # raise a 505 error
+            HTTPError(
+                response=Mock(status_code=505, json=Mock(return_value={})),
+>>>>>>> upstream/main
                 request=Mock(),
             ),
         ]

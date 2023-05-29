@@ -33,10 +33,20 @@ def test_get_request() -> None:
         "prompt": "hello",
         "num_results": 3,
         "engine": "dummy",
+<<<<<<< HEAD
     }
     assert response.get_json_response() == {
         "choices": [{"text": "hello"}] * 3,
         "usage": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 3,
+=======
+        "request_cls": "LMRequest",
+    }
+    assert response.get_json_response() == {
+        "choices": [{"text": "hello", "token_logprobs": None, "tokens": None}] * 3,
+    }
+    assert response.get_usage_obj().dict() == {
+        "usages": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 3,
+>>>>>>> upstream/main
     }
 
     request_params = client.get_request("hello", {"n": 5})
@@ -45,10 +55,20 @@ def test_get_request() -> None:
         "prompt": "hello",
         "num_results": 5,
         "engine": "dummy",
+<<<<<<< HEAD
     }
     assert response.get_json_response() == {
         "choices": [{"text": "hello"}] * 5,
         "usage": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 5,
+=======
+        "request_cls": "LMRequest",
+    }
+    assert response.get_json_response() == {
+        "choices": [{"text": "hello", "token_logprobs": None, "tokens": None}] * 5,
+    }
+    assert response.get_usage_obj().dict() == {
+        "usages": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 5,
+>>>>>>> upstream/main
     }
 
     request_params = client.get_request(["hello"] * 5, {"n": 1})
@@ -57,8 +77,18 @@ def test_get_request() -> None:
         "prompt": ["hello"] * 5,
         "num_results": 1,
         "engine": "dummy",
+<<<<<<< HEAD
     }
     assert response.get_json_response() == {
         "choices": [{"text": "hello"}] * 5,
         "usage": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 5,
+=======
+        "request_cls": "LMRequest",
+    }
+    assert response.get_json_response() == {
+        "choices": [{"text": "hello", "token_logprobs": None, "tokens": None}] * 5,
+    }
+    assert response.get_usage_obj().dict() == {
+        "usages": [{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}] * 5,
+>>>>>>> upstream/main
     }

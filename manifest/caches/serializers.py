@@ -77,6 +77,7 @@ class NumpyByteSerializer(Serializer):
         Returns:
             normalized key.
         """
+<<<<<<< HEAD
         # Assume response is a dict with keys "choices" -> List dicts
         # with keys "array".
         choices = response["choices"]
@@ -85,6 +86,17 @@ class NumpyByteSerializer(Serializer):
         del response["choices"]
         response_copy = response.copy()
         response["choices"] = choices
+=======
+        sub_response = response["response"]
+        # Assume response is a dict with keys "choices" -> List dicts
+        # with keys "array".
+        choices = sub_response["choices"]
+        # We don't want to modify the response in place
+        # but we want to avoid calling deepcopy on an array
+        del sub_response["choices"]
+        response_copy = sub_response.copy()
+        sub_response["choices"] = choices
+>>>>>>> upstream/main
         response_copy["choices"] = []
         for choice in choices:
             if "array" not in choice:
@@ -101,7 +113,12 @@ class NumpyByteSerializer(Serializer):
                 hash_str = f.getvalue().hex()
             new_choice["array"] = hash_str
             response_copy["choices"].append(new_choice)
+<<<<<<< HEAD
         return json.dumps(response_copy, sort_keys=True)
+=======
+        response["response"] = response_copy
+        return json.dumps(response, sort_keys=True)
+>>>>>>> upstream/main
 
     def key_to_response(self, key: str) -> Dict:
         """
@@ -114,7 +131,11 @@ class NumpyByteSerializer(Serializer):
             unnormalized response dict.
         """
         response = json.loads(key)
+<<<<<<< HEAD
         for choice in response["choices"]:
+=======
+        for choice in response["response"]["choices"]:
+>>>>>>> upstream/main
             hash_str = choice["array"]
             byte_str = bytes.fromhex(hash_str)
             with io.BytesIO(byte_str) as f:
@@ -152,6 +173,7 @@ class ArraySerializer(Serializer):
         Returns:
             normalized key.
         """
+<<<<<<< HEAD
         # Assume response is a dict with keys "choices" -> List dicts
         # with keys "array".
         choices = response["choices"]
@@ -160,6 +182,17 @@ class ArraySerializer(Serializer):
         del response["choices"]
         response_copy = response.copy()
         response["choices"] = choices
+=======
+        sub_response = response["response"]
+        # Assume response is a dict with keys "choices" -> List dicts
+        # with keys "array".
+        choices = sub_response["choices"]
+        # We don't want to modify the response in place
+        # but we want to avoid calling deepcopy on an array
+        del sub_response["choices"]
+        response_copy = sub_response.copy()
+        sub_response["choices"] = choices
+>>>>>>> upstream/main
         response_copy["choices"] = []
         for choice in choices:
             if "array" not in choice:
@@ -179,7 +212,12 @@ class ArraySerializer(Serializer):
             response_copy["choices"].append(new_choice)
             if not self.writer.contains_key(hash_str):
                 self.writer.put(hash_str, arr)
+<<<<<<< HEAD
         return json.dumps(response_copy, sort_keys=True)
+=======
+        response["response"] = response_copy
+        return json.dumps(response, sort_keys=True)
+>>>>>>> upstream/main
 
     def key_to_response(self, key: str) -> Dict:
         """
@@ -194,7 +232,11 @@ class ArraySerializer(Serializer):
             unnormalized response dict.
         """
         response = json.loads(key)
+<<<<<<< HEAD
         for choice in response["choices"]:
+=======
+        for choice in response["response"]["choices"]:
+>>>>>>> upstream/main
             hash_str = choice["array"]
             choice["array"] = self.writer.get(hash_str)
         return response

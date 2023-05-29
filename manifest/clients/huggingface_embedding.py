@@ -58,6 +58,16 @@ class HuggingFaceEmbeddingClient(Client):
         """Return whether the client supports batch inference."""
         return True
 
+<<<<<<< HEAD
+=======
+    def supports_streaming_inference(self) -> bool:
+        """Return whether the client supports streaming inference.
+
+        Override in child client class.
+        """
+        return False
+
+>>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -72,7 +82,11 @@ class HuggingFaceEmbeddingClient(Client):
         res["client_name"] = self.NAME
         return res
 
+<<<<<<< HEAD
     def format_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
+=======
+    def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
+>>>>>>> upstream/main
         """
         Format response to dict.
 

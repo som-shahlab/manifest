@@ -6,8 +6,11 @@ runs/*
 *.pk
 **/*.pt
 **/*.pk
+<<<<<<< HEAD
 .vscode/
 .vscode/*
+=======
+>>>>>>> upstream/main
 
 # PyCharm
 *.idea

@@ -49,7 +49,11 @@ def prompt_manifest(*, manifest_in: schemas.ManifestCreate) -> Dict:
     return {
         "response": response.get_response(),
         "cached": response.is_cached(),
+<<<<<<< HEAD
         "request_params": response.get_request(),
+=======
+        "request_params": response.get_request_obj(),
+>>>>>>> upstream/main
     }
 
 

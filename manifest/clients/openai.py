@@ -37,9 +37,17 @@ class OpenAIClient(Client):
         "n": ("n", 1),
         "top_p": ("top_p", 1.0),
         "top_k": ("best_of", 1),
+<<<<<<< HEAD
         "stop_sequences": ("stop", None),  # OpenAI doesn't like empty lists
         "presence_penalty": ("presence_penalty", 0.0),
         "frequency_penalty": ("frequency_penalty", 0.0),
+=======
+        "logprobs": ("logprobs", None),
+        "stop_sequences": ("stop", None),  # OpenAI doesn't like empty lists
+        "presence_penalty": ("presence_penalty", 0.0),
+        "frequency_penalty": ("frequency_penalty", 0.0),
+        "batch_size": ("batch_size", 20),
+>>>>>>> upstream/main
     }
     REQUEST_CLS: Type[Request] = LMRequest
     NAME = "openai"
@@ -58,7 +66,11 @@ class OpenAIClient(Client):
             connection_str: connection string.
             client_args: client arguments.
         """
+<<<<<<< HEAD
         self.api_key = os.environ.get("OPENAI_API_KEY", connection_str)
+=======
+        self.api_key = connection_str or os.environ.get("OPENAI_API_KEY")
+>>>>>>> upstream/main
         if self.api_key is None:
             raise ValueError(
                 "OpenAI API key not set. Set OPENAI_API_KEY environment "
@@ -93,6 +105,16 @@ class OpenAIClient(Client):
         """Return whether the client supports batch inference."""
         return True
 
+<<<<<<< HEAD
+=======
+    def supports_streaming_inference(self) -> bool:
+        """Return whether the client supports streaming inference.
+
+        Override in child client class.
+        """
+        return True
+
+>>>>>>> upstream/main
     def get_model_params(self) -> Dict:
         """
         Get model params.
@@ -105,6 +127,30 @@ class OpenAIClient(Client):
         """
         return {"model_name": self.NAME, "engine": getattr(self, "engine")}
 
+<<<<<<< HEAD
+=======
+    def postprocess_response(self, response: Dict, request: Dict) -> Dict[str, Any]:
+        """
+        Validate response as dict.
+
+        Args:
+            response: response
+            request: request
+
+        Return:
+            response as dict
+        """
+        validated_response = super().postprocess_response(response, request)
+        # Handle logprobs
+        for choice in validated_response["choices"]:
+            if "logprobs" in choice:
+                logprobs = choice.pop("logprobs")
+                if logprobs and "token_logprobs" in logprobs:
+                    choice["token_logprobs"] = logprobs["token_logprobs"]
+                    choice["tokens"] = logprobs["tokens"]
+        return validated_response
+
+>>>>>>> upstream/main
     def split_usage(self, request: Dict, choices: List[str]) -> List[Dict[str, int]]:
         """Split usage into list of usages for each prompt."""
         try:
