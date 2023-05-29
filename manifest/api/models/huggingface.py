@@ -732,7 +732,7 @@ class TextGenerationModel(HuggingFaceModel):
             ).squeeze(-1)
             masked_probs = label_mask * label_token_probs
             label_probs = masked_probs.sum(dim=-1)
-        elif self.model_type == "text-generation":
+        elif self.model_type == "text-generation" or self.model_type == "llama-text-generation":
             # For gpt2-like models, we append the label to the
             # end of the prompt, measure the entire sequence's
             # logprob, and count that as the label's logprob
