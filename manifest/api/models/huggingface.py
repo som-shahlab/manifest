@@ -475,13 +475,6 @@ class TextGenerationModel(HuggingFaceModel):
             use_fp16,
         )
 
-        # safetensors_file_exists = any(file.endswith(".safetensors") for file in os.listdir(model_name_or_path))
-
-        # if safetensors_file_exists:
-        #     use_safetensors=True
-        # else:
-        #     use_safetensors=None
-
         if (
             MODEL_REGISTRY.get(
                 self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
