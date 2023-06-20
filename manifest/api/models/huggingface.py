@@ -237,8 +237,15 @@ class HuggingFaceModel(Model):
         if Path(self.model_path).exists() and Path(self.model_path).is_dir():
             # Try to find config
             if (Path(self.model_path) / "config.json").exists():
-                config = json.load(open(Path(self.model_path) / "config.json"))
-                model_name_or_path = config["_name_or_path"]
+                try:
+                    config = json.load(open(Path(self.model_path) / "config.json"))
+                    if config["_name_or_path"] != "":
+                        model_name_or_path = config["_name_or_path"]
+                    else:
+                        print(f"`_name_or_path` attribute in config set to \"\". Defaulting to {model_name_or_path}")
+                except Exception:
+                    # Wasn't able to load config
+                    print(f"Unable to load config from {self.model_path}")
         self.model_name = model_name_or_path
         self.model_type = model_type
         if self.model_name not in MODEL_REGISTRY and self.model_type is None:
