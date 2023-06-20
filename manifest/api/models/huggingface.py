@@ -475,12 +475,12 @@ class TextGenerationModel(HuggingFaceModel):
             use_fp16,
         )
 
-        safetensors_file_exists = any(file.endswith(".safetensors") for file in os.listdir(model_name_or_path))
+        # safetensors_file_exists = any(file.endswith(".safetensors") for file in os.listdir(model_name_or_path))
 
-        if safetensors_file_exists:
-            use_safetensors=True
-        else:
-            use_safetensors=False
+        # if safetensors_file_exists:
+        #     use_safetensors=True
+        # else:
+        #     use_safetensors=None
 
         if (
             MODEL_REGISTRY.get(
@@ -509,7 +509,6 @@ class TextGenerationModel(HuggingFaceModel):
                 self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
             ).from_pretrained(  # type: ignore
                 self.model_path,
-                use_safetensors=use_safetensors,
                 cache_dir=cache_dir,
                 load_in_8bit=True,
                 device_map="auto",
@@ -523,7 +522,6 @@ class TextGenerationModel(HuggingFaceModel):
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
-                    use_safetensors=use_safetensors,
                     cache_dir=cache_dir,
                     revision="float16",
                     torch_dtype=torch.float16,
@@ -534,7 +532,6 @@ class TextGenerationModel(HuggingFaceModel):
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
-                    use_safetensors=use_safetensors,
                     cache_dir=cache_dir,
                     torch_dtype=dtype,
                     trust_remote_code=True,
