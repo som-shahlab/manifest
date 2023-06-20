@@ -475,9 +475,8 @@ class TextGenerationModel(HuggingFaceModel):
         )
 
         safetensors_file_exists = any(file.endswith(".safetensors") for file in os.listdir(model_name_or_path))
-        index_json_file_exists = any(file.endswith(".bin.index.json") for file in os.listdir(model_name_or_path))
 
-        if safetensors_file_exists and index_json_file_exists:
+        if safetensors_file_exists:
             use_safetensors=True
         else:
             use_safetensors=False
