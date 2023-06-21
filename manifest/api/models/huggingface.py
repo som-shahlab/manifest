@@ -443,7 +443,6 @@ class TextGenerationModel(HuggingFaceModel):
         use_deepspeed: bool = False,
         perc_max_gpu_mem_red: float = 1.0,
         use_fp16: bool = False,
-        trust_remote_code: bool = None
     ):
         """
         Initialize model.
@@ -491,7 +490,6 @@ class TextGenerationModel(HuggingFaceModel):
             except ValueError:
                 tokenizer = AutoTokenizer.from_pretrained(
                     self.model_name,
-                    trust_remote_code=trust_remote_code,
                     truncation_side="left",
                     padding_side="left",
                     use_fast=False,
@@ -504,11 +502,11 @@ class TextGenerationModel(HuggingFaceModel):
                 self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
             ).from_pretrained(  # type: ignore
                 self.model_path,
-                trust_remote_code=trust_remote_code,
                 cache_dir=cache_dir,
                 load_in_8bit=True,
                 device_map="auto",
                 max_memory=max_memory,
+                trust_remote_code=True,
             )
         else:
             try:
@@ -517,19 +515,19 @@ class TextGenerationModel(HuggingFaceModel):
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
-                    trust_remote_code=trust_remote_code,
                     cache_dir=cache_dir,
                     revision="float16",
                     torch_dtype=torch.float16,
+                    trust_remote_code=True,
                 )
             except Exception:
                 model = MODEL_REGISTRY.get(
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
-                    trust_remote_code=trust_remote_code,
                     cache_dir=cache_dir,
                     torch_dtype=dtype,
+                    trust_remote_code=True,
                 )
         model.eval()
         print(f"Loaded Model DType {model.dtype}")
