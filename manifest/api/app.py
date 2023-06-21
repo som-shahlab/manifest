@@ -115,6 +115,11 @@ def parse_args() -> argparse.Namespace:
             "If that's not set, defaults to 5000"
         ),
     )
+    parser.add_argument(
+        "--trust_remote_code",
+        action="store_true",
+        help=("Trust remote code"),
+    )
     args = parser.parse_args()
     return args
 
@@ -171,6 +176,7 @@ def main() -> None:
         use_deepspeed=kwargs.use_deepspeed,
         perc_max_gpu_mem_red=kwargs.percent_max_gpu_mem_reduction,
         use_fp16=kwargs.fp16,
+        trust_remote_code=kwargs.trust_remote_code
     )
     app.run(host="0.0.0.0", port=kwargs.port, debug=kwargs.is_flask_debug)
 
