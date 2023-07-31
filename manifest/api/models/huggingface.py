@@ -504,9 +504,9 @@ class TextGenerationModel(HuggingFaceModel):
                 )
         dtype = torch.float16 if use_fp16 else "auto"
         config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
-        max_seq_len = getattr(config, "max_seq_len", None)
-        if max_seq_len and self.max_seq_len:
-            config.update({"max_seq_len": self.max_seq_len})
+        max_seq_len_curr = getattr(config, "max_seq_len", None)
+        if max_seq_len_curr and max_seq_len:
+            config.update({"max_seq_len": max_seq_len})
         if use_bitsandbytes:
             print("WARNING!!! Cannot use sampling with bitsandbytes.")
             max_memory = get_max_memory(perc_max_gpu_mem_red)
