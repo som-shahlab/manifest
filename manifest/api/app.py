@@ -60,6 +60,12 @@ def parse_args() -> argparse.Namespace:
         help="Name of model or path to model. Used in initialize of model class.",
     )
     parser.add_argument(
+        "--max_seq_len",
+        default=None,
+        type=int,
+        help="Max Sequence Length to update model config",
+    )
+    parser.add_argument(
         "--cache_dir", default=None, type=str, help="Cache directory for models."
     )
     parser.add_argument(
@@ -134,6 +140,7 @@ def main() -> None:
     model_type = kwargs.model_type
     model_gen_type = kwargs.model_generation_type
     model_name_or_path = kwargs.model_name_or_path
+
     if not model_name_or_path:
         raise ValueError("Must provide model_name_or_path.")
     if kwargs.use_accelerate_multigpu:
@@ -163,6 +170,7 @@ def main() -> None:
     model = MODEL_CONSTRUCTORS[model_type](
         model_name_or_path,
         model_type=model_gen_type,
+        max_seq_len=kwargs.max_seq_len,
         cache_dir=kwargs.cache_dir,
         device=kwargs.device,
         use_accelerate=kwargs.use_accelerate_multigpu,

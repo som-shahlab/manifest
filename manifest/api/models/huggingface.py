@@ -13,6 +13,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
+    AutoConfig,
     BloomForCausalLM,
     CLIPModel,
     CLIPProcessor,
@@ -118,7 +119,10 @@ class GenerationPipeline:
                 if self.max_length is None:
                     # Default
                     self.max_length = 2048
-
+        
+        max_seq_len = getattr(config, "max_seq_len", None)
+        if max_seq_len:
+            self.max_length = max_seq_len
         print(f"Usings max_length: {self.max_length}")
 
         self.tokenizer = tokenizer
@@ -346,6 +350,7 @@ class CrossModalEncoderModel(HuggingFaceModel):
         model_name_or_path: str,
         model_type: Optional[str] = None,
         model_config: Optional[str] = None,
+        max_seq_len: int = None,
         cache_dir: Optional[str] = None,
         device: int = 0,
         use_accelerate: bool = False,
@@ -435,6 +440,7 @@ class TextGenerationModel(HuggingFaceModel):
         model_name_or_path: str,
         model_type: Optional[str] = None,
         model_config: Optional[str] = None,
+        max_seq_len: int = None,
         cache_dir: Optional[str] = None,
         device: int = 0,
         use_accelerate: bool = False,
@@ -465,6 +471,7 @@ class TextGenerationModel(HuggingFaceModel):
             model_name_or_path,
             model_type,
             model_config,
+            max_seq_len,
             cache_dir,
             device,
             use_accelerate,
@@ -495,6 +502,9 @@ class TextGenerationModel(HuggingFaceModel):
                     use_fast=False,
                 )
         dtype = torch.float16 if use_fp16 else "auto"
+        config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+        if "max_seq_len" in config and self.max_seq_len:
+            config.update({"max_seq_len": self.max_seq_len})
         if use_bitsandbytes:
             print("WARNING!!! Cannot use sampling with bitsandbytes.")
             max_memory = get_max_memory(perc_max_gpu_mem_red)
@@ -502,6 +512,7 @@ class TextGenerationModel(HuggingFaceModel):
                 self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
             ).from_pretrained(  # type: ignore
                 self.model_path,
+                config=config,
                 cache_dir=cache_dir,
                 load_in_8bit=True,
                 device_map="auto",
@@ -515,6 +526,7 @@ class TextGenerationModel(HuggingFaceModel):
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
+                    config=config,
                     cache_dir=cache_dir,
                     revision="float16",
                     torch_dtype=torch.float16,
@@ -525,6 +537,7 @@ class TextGenerationModel(HuggingFaceModel):
                     self.model_name, MODEL_GENTYPE_REGISTRY.get(self.model_type, None)
                 ).from_pretrained(  # type: ignore
                     self.model_path,
+                    config=config,
                     cache_dir=cache_dir,
                     torch_dtype=dtype,
                     trust_remote_code=True,

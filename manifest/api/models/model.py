@@ -12,6 +12,7 @@ class Model:
         model_name_or_path: str,
         model_type: str,
         cache_dir: str,
+        max_seq_len: int,
         device: int,
         use_accelerate: bool,
         use_parallelize: bool,
