@@ -206,6 +206,7 @@ class HuggingFaceModel(Model):
         model_name_or_path: str,
         model_type: Optional[str] = None,
         model_config: Optional[str] = None,
+        max_seq_len: int = None,
         cache_dir: Optional[str] = None,
         device: int = 0,
         use_accelerate: bool = False,
