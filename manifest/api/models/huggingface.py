@@ -153,6 +153,7 @@ class GenerationPipeline:
             if not self.is_encdec
             else self.max_length
         )
+        print("Tokenizer truncation length: ", max_input_len)
         encoded_prompt = self.tokenizer(
             text,
             max_length=max_input_len,
@@ -575,6 +576,7 @@ class TextGenerationModel(HuggingFaceModel):
             bitsandbytes=use_bitsandbytes,
             is_encdec=self.is_encdec,
         )
+        print(f"Usings max_length for tokenizer: {self.pipeline.max_length}")
 
     @torch.no_grad()
     def embed(self, prompt: Union[str, List[str]], **kwargs: Any) -> np.ndarray:
