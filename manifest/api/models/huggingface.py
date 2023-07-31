@@ -587,6 +587,7 @@ class TextGenerationModel(HuggingFaceModel):
         Returns:
             list of embeddings (list of length 1 for 1 embedding).
         """
+        print("Tokenizer Truncation Length: ", self.pipeline.max_length)
         if isinstance(prompt, str):
             prompt = [prompt]
         encoded_prompt = self.pipeline.tokenizer(
@@ -660,6 +661,7 @@ class TextGenerationModel(HuggingFaceModel):
         """
         if isinstance(prompt, str):
             prompt = [prompt]
+        print("Tokenizer Truncation Length: ", self.pipeline.max_length)
         encoded_prompt = self.pipeline.tokenizer(
             prompt,
             max_length=self.pipeline.max_length,
@@ -695,6 +697,7 @@ class TextGenerationModel(HuggingFaceModel):
                  prompt: Union[str, List[str]], 
                  **kwargs: Any) -> torch.Tensor:
         """Tokenize input."""
+        print("Tokenizer Truncation Length: ", self.pipeline.max_length)
         if isinstance(prompt, str):
             prompt = [prompt]
         encoded_prompt = self.pipeline.tokenizer(
@@ -729,6 +732,8 @@ class TextGenerationModel(HuggingFaceModel):
         
         # By default, will strip trailing/leading spaces from the label
         is_strip_spaces: bool = kwargs.get('is_strip_spaces', True)
+
+        print("Tokenizer Truncation Length: ", self.pipeline.max_length)
 
         if self.model_type == "text2text-generation":
             # For seq2seq models, we add the label as the
